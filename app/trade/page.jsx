@@ -61,9 +61,13 @@ export default function Trade() {
       if (hideTimer.current) clearTimeout(hideTimer.current);
       hideTimer.current = setTimeout(() => setChartState("hidden"), HIDE_DELAY_MS);
     } else {
+      // Primero renderizamos el chart invisible, luego lo hacemos visible
       setChartState("showing");
       if (showTimer.current) clearTimeout(showTimer.current);
-      showTimer.current = setTimeout(() => setChartState("visible"), ANIM_MS);
+      // Pequeño delay para asegurar que el DOM se actualice primero
+      showTimer.current = setTimeout(() => {
+        setChartState("visible");
+      }, 50);
     }
   };
 
@@ -97,25 +101,19 @@ export default function Trade() {
       </div>
 
       <div className="w-full max-w-none mx-auto px-6 py-8 mt-[100px] lg:max-w-[calc(100%-200px)]">
-        <div className="flex flex-col lg:flex-row gap-8 items-start relative">
+        <div className="flex flex-col lg:flex-row gap-8 items-start relative overflow-hidden">
           {/* Chart column */}
-          <div 
-            className={[
-              "lg:w-[60%] transition-all duration-700 ease-out",
-              chartState === "hidden" 
-                ? "lg:opacity-0 lg:transform lg:scale-95 lg:-translate-x-full" 
-                : chartState === "hiding"
-                ? "lg:opacity-0 lg:transform lg:scale-100 lg:translate-x-0"
-                : "lg:opacity-100 lg:transform lg:scale-100 lg:translate-x-0"
-            ].join(" ")}
-          >
+          {(chartState !== "hidden") && (
+            <div 
+              className={[
+                "lg:w-[60%] transition-opacity duration-700 ease-out",
+                chartState === "hiding" || chartState === "showing"
+                  ? "lg:opacity-0"
+                  : "lg:opacity-100"
+              ].join(" ")}
+            >
             {chartVisible && (
-              <div 
-                className={[
-                  "w-full transition-opacity duration-700 ease-out",
-                  chartState === "hiding" ? "opacity-0" : "opacity-100"
-                ].join(" ")}
-              >
+              <div className="w-full">
                 <h2 className="text-white text-xl font-semibold mb-4">ETH/USDT Chart</h2>
                 <div className="bg-gray-800 rounded-lg p-4">
                   <ClientOnly
@@ -134,14 +132,15 @@ export default function Trade() {
               </div>
             )}
           </div>
+          )}
 
           {/* Swap column */}
           <div
             className={[
-              "lg:w-[40%] transition-all duration-700 ease-out",
+              "transition-all duration-700 ease-out",
               chartState === "hidden" 
-                ? "lg:transform lg:-translate-x-[calc(60%+2rem)] lg:w-[720px] lg:max-w-[720px] lg:mx-auto" 
-                : "lg:transform lg:translate-x-0"
+                ? "lg:w-[720px] lg:max-w-[720px] lg:mx-auto" 
+                : "lg:w-[40%]"
             ].join(" ")}
           >
             <h2 className="text-white text-xl font-semibold mb-4 text-center lg:text-left">Quick Swap</h2>
