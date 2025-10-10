@@ -73,13 +73,13 @@ export default function Navigation() {
             </Link>
           </div>
 
-          {/* Hamburger Menu Button - Desktop & Mobile */}
+          {/* Buttons + Dropdown wrapped in the same ref */}
           <div className="flex items-center" ref={menuRef}>
             {/* Desktop Button */}
             <button
               type="button"
               onClick={toggleMenu}
-              className="hidden md:inline-flex flex-col justify-center items-end focus:outline-none p-2 cursor-pointer"
+              className="hidden md:inline-flex flex-col justify-center items-end focus:outline-none"
               style={{
                 marginTop: "34px",
                 marginRight: "43px",
@@ -110,7 +110,7 @@ export default function Navigation() {
                     ></div>
                   </>
                 ) : (
-                  /* hamburger when closed */
+                  /* Closed hamburger */
                   <>
                     <div
                       className="w-6 h-0.5 bg-primary-500 transition-all duration-300 mb-1"
@@ -135,7 +135,7 @@ export default function Navigation() {
             <button
               type="button"
               onClick={toggleMenu}
-              className="md:hidden inline-flex flex-col justify-center items-end focus:outline-none p-2 cursor-pointer"
+              className="md:hidden inline-flex flex-col justify-center items-end focus:outline-none"
               style={{
                 marginTop: "22px",
                 marginRight: "24px",
@@ -166,19 +166,18 @@ export default function Navigation() {
                     ></div>
                   </>
                 ) : (
-                  /* hamburger when closed */
+                  /*  */
                   <>
-                    {/* Top line - 100% width */}
                     <div
                       className="w-5 h-0.5 bg-primary-500 transition-all duration-300 mb-1"
                       style={{ backgroundColor: "#95E100" }}
                     ></div>
-                    {/* Middle line - 50% width, aligned to the right */}
+
                     <div
                       className="h-0.5 bg-primary-500 transition-all duration-300 mb-1"
                       style={{ backgroundColor: "#95E100", width: "10px" }}
                     ></div>
-                    {/* Bottom line - 75% width, aligned to the right */}
+
                     <div
                       className="h-0.5 bg-primary-500 transition-all duration-300"
                       style={{ backgroundColor: "#95E100", width: "15px" }}
@@ -187,63 +186,54 @@ export default function Navigation() {
                 )}
               </div>
             </button>
+
+            {isMenuOpen && (
+              <div className="absolute top-16 right-0 bg-white dark:bg-gray-900 shadow-lg z-50">
+                <div className="py-4">
+                  <Link
+                    href="/"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`block transition-colors uppercase mb-4 mr-10 md:mr-36 cursor-pointer ${
+                      isActive("/")
+                        ? "text-primary-500 dark:text-accent"
+                        : "text-white hover:text-primary-500 dark:hover:text-accent"
+                    }`}
+                    style={{
+                      fontFamily: "var(--font-abhaya-libre), serif",
+                      fontWeight: 800,
+                      fontSize: "18px",
+                      lineHeight: "18px",
+                      letterSpacing: "2.7px",
+                      textAlign: "right",
+                    }}
+                  >
+                    Home
+                  </Link>
+                  <Link
+                    href="/trade"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`block transition-colors uppercase mr-10 md:mr-36 cursor-pointer ${
+                      isActive("/trade")
+                        ? "text-primary-500 dark:text-accent"
+                        : "text-white hover:text-primary-500 dark:hover:text-accent"
+                    }`}
+                    style={{
+                      fontFamily: "var(--font-abhaya-libre), serif",
+                      fontWeight: 800,
+                      fontSize: "18px",
+                      lineHeight: "18px",
+                      letterSpacing: "2.7px",
+                      textAlign: "right",
+                    }}
+                  >
+                    Trade
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Dropdown Menu */}
-      {isMenuOpen && (
-        <div className="absolute top-16 right-0 bg-white dark:bg-gray-900 shadow-lg z-50">
-          <div className="py-4">
-            <Link
-              href="/"
-              onClick={() => setIsMenuOpen(false)}
-              className={`block transition-colors uppercase mb-4 mr-10 md:mr-36 cursor-pointer ${
-                isActive("/")
-                  ? "text-primary-500 dark:text-accent"
-                  : "text-white hover:text-primary-500 dark:hover:text-accent"
-              }`}
-              style={{
-                fontFamily: "var(--font-abhaya-libre), serif",
-                fontWeight: 800,
-                fontSize: "18px",
-                lineHeight: "18px",
-                letterSpacing: "2.7px",
-                textAlign: "right",
-                minWidth: "73.61px",
-                height: "26.5px",
-                padding: "4px 8px",
-                textDecoration: "none",
-              }}
-            >
-              Home
-            </Link>
-            <Link
-              href="/trade"
-              onClick={() => setIsMenuOpen(false)}
-              className={`block transition-colors uppercase mr-10 md:mr-36 cursor-pointer ${
-                isActive("/trade")
-                  ? "text-primary-500 dark:text-accent"
-                  : "text-white hover:text-primary-500 dark:hover:text-accent"
-              }`}
-              style={{
-                fontFamily: "var(--font-abhaya-libre), serif",
-                fontWeight: 800,
-                fontSize: "18px",
-                lineHeight: "18px",
-                letterSpacing: "2.7px",
-                textAlign: "right",
-                minWidth: "73.61px",
-                height: "26.5px",
-                padding: "4px 8px",
-                textDecoration: "none",
-              }}
-            >
-              Trade
-            </Link>
-          </div>
-        </div>
-      )}
     </nav>
   );
 }
