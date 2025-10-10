@@ -67,7 +67,7 @@ export default function SimpleTradingViewWidget({ symbol = "ETHUSDT" }) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-[500px] bg-gray-800 rounded text-red-400">
+      <div className="flex items-center justify-center h-full bg-gray-800 rounded-xl text-red-400">
         <div className="text-center">
           <p>⚠️ Chart unavailable</p>
           <p className="text-sm mt-2">{symbol}</p>
@@ -77,9 +77,9 @@ export default function SimpleTradingViewWidget({ symbol = "ETHUSDT" }) {
   }
 
   return (
-    <div className="relative" style={{ height: "500px", width: "100%" }}>
+    <div className="relative h-full w-full">
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 rounded text-white z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 rounded-xl text-white z-10">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
             <p>Loading {symbol}...</p>
@@ -88,7 +88,7 @@ export default function SimpleTradingViewWidget({ symbol = "ETHUSDT" }) {
       )}
       <div
         ref={container}
-        className="tradingview-widget-container bg-gray-800 rounded"
+        className="tradingview-widget-container bg-gray-800 rounded-xl h-full w-full"
         style={{ height: "100%", width: "100%" }}
       />
     </div>

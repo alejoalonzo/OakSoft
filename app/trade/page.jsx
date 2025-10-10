@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import SimpleTradingViewWidget from "../../components/SimpleTradingViewWidget";
 
 function EyeIcon(props) {
   return (
@@ -123,8 +124,24 @@ export default function Trade() {
             >
               {/* Actual chart content */}
               <h2 className="text-white text-xl font-semibold mb-4">ETH/USDT Chart</h2>
-              <div className="h-[500px] w-full bg-gray-700 rounded-xl border border-white/10 flex items-center justify-center">
-                <span className="text-gray-100">Chart placeholder</span>
+              <div 
+                className="h-[500px] w-full relative border border-white/10"
+                style={{
+                  borderRadius: '12px',
+                  background: 'rgba(31, 41, 55, 1)',
+                  overflow: 'hidden'
+                }}
+              >
+                <div 
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    clipPath: 'inset(0px round 11px)',
+                    WebkitClipPath: 'inset(0px round 11px)'
+                  }}
+                >
+                  <SimpleTradingViewWidget symbol="ETHUSDT" />
+                </div>
               </div>
             </div>
           </div>
