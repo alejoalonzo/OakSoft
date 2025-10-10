@@ -1,29 +1,6 @@
 "use client";
 
-import { SwapWidget } from "@relayprotocol/relay-kit-ui";
-import { useConnect } from "wagmi";
-import SimpleTradingViewWidget from "../../components/SimpleTradingViewWidget";
-import ClientOnly from "../../components/ClientOnly";
 import { useEffect, useRef, useState } from "react";
-
-// Wrapper component to handle hydration issues with SwapWidget
-function SwapWidgetWrapper({ onConnectWallet }) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return (
-      <div className="bg-gray-800 rounded-lg p-8 text-center text-white">
-        Loading swap widget...
-      </div>
-    );
-  }
-
-  return <SwapWidget supportedWalletVMs={["evm"]} onConnectWallet={onConnectWallet} />;
-}
 
 function EyeIcon(props) {
   return (
@@ -43,31 +20,27 @@ function EyeOffIcon(props) {
 }
 
 export default function Trade() {
-  const { connect, connectors } = useConnect();
-  const connectInjected = () => {
-    const injected = connectors.find((c) => c.id === "injected") || connectors[0];
-    if (injected) connect({ connector: injected });
-  };
+  // Timings
+  const HIDE_MS = 300;        // fade-out when hiding
+  const WIDTH_MS = 420;       // column width (outer container)
+  const SHOW_MS = 1200;       // chart reveal (reappearance)
+  const SHOW_DELAY = 120;     // slight delay before triggering the reveal
 
-  const ANIM_MS = 700;
-  const HIDE_DELAY_MS = 100;
   const [chartState, setChartState] = useState("visible"); // "visible" | "hiding" | "hidden" | "showing"
   const hideTimer = useRef(null);
   const showTimer = useRef(null);
 
   const onToggleChart = () => {
     if (chartState === "visible" || chartState === "showing") {
+      // HIDE: only fade and collapse width quickly
       setChartState("hiding");
       if (hideTimer.current) clearTimeout(hideTimer.current);
-      hideTimer.current = setTimeout(() => setChartState("hidden"), HIDE_DELAY_MS);
+      hideTimer.current = setTimeout(() => setChartState("hidden"), HIDE_MS);
     } else {
-      // Primero renderizamos el chart invisible, luego lo hacemos visible
-      setChartState("showing");
+      // SHOW: expand container quickly and then REVEAL from right→left
+      setChartState("showing"); // prepares w-0 for the reveal
       if (showTimer.current) clearTimeout(showTimer.current);
-      // Pequeño delay para asegurar que el DOM se actualice primero
-      showTimer.current = setTimeout(() => {
-        setChartState("visible");
-      }, 50);
+      showTimer.current = setTimeout(() => setChartState("visible"), SHOW_DELAY); // triggers the w-full reveal
     }
   };
 
@@ -78,10 +51,26 @@ export default function Trade() {
     };
   }, []);
 
-  const chartVisible = chartState === "visible" || chartState === "showing" || chartState === "hiding";
+  const isHidden = chartState === "hidden";
+  const isCollapsing = chartState === "hiding" || chartState === "hidden"; // right side centers quickly
+
+  // --- REVEAL MASK ---
+  // The internal "reveal" sticks to the right (ml-auto) and animates width 0→100%.
+  const revealWidthClass =
+    chartState === "showing" ? "w-0"
+    : chartState === "visible" ? "w-full"
+    : chartState === "hiding" ? "w-full"
+    : "w-0"; // hidden
+
+  const revealOpacityClass =
+    chartState === "showing" ? "opacity-0"
+    : chartState === "visible" ? "opacity-100"
+    : chartState === "hiding" ? "opacity-0"
+    : "opacity-0";
 
   return (
     <div className="min-h-screen bg-gray-900 w-full">
+      {/* Title */}
       <div
         className="flex justify-center pt-[60px] mb-[60px]"
         style={{ width: "292.07px", height: "76.8px", marginLeft: "auto", marginRight: "auto" }}
@@ -101,74 +90,77 @@ export default function Trade() {
       </div>
 
       <div className="w-full max-w-none mx-auto px-6 py-8 mt-[100px] lg:max-w-[calc(100%-200px)]">
-        <div className="flex flex-col lg:flex-row gap-8 items-start relative overflow-hidden">
-          {/* Chart column */}
-          {(chartState !== "hidden") && (
-            <div 
-              className={[
-                "lg:w-[60%] transition-opacity duration-700 ease-out",
-                chartState === "hiding" || chartState === "showing"
-                  ? "lg:opacity-0"
-                  : "lg:opacity-100"
-              ].join(" ")}
-            >
-            {chartVisible && (
-              <div className="w-full">
-                <h2 className="text-white text-xl font-semibold mb-4">ETH/USDT Chart</h2>
-                <div className="bg-gray-800 rounded-lg p-4">
-                  <ClientOnly
-                    fallback={
-                      <div className="h-[500px] flex items-center justify-center text-white bg-gray-800 rounded">
-                        <div className="text-center">
-                          <div className="animate-pulse bg-gray-700 h-8 w-32 mx-auto mb-2 rounded"></div>
-                          <p>Loading chart...</p>
-                        </div>
-                      </div>
-                    }
-                  >
-                    <SimpleTradingViewWidget symbol="ETHUSDT" />
-                  </ClientOnly>
-                </div>
-              </div>
-            )}
-          </div>
-          )}
-
-          {/* Swap column */}
+        <div className="flex flex-col lg:flex-row gap-8 relative">
+          {/* LEFT (Chart) - outer container: reserved layout width */}
           <div
             className={[
-              "transition-all duration-700 ease-out",
-              chartState === "hidden" 
-                ? "lg:w-[720px] lg:max-w-[720px] lg:mx-auto" 
-                : "lg:w-[40%]"
+              "overflow-hidden transition-[width] duration-[420ms]",
+              "ease-[cubic-bezier(0.33,0,0.2,1)]",
+              isCollapsing ? "w-0 lg:w-0" : "w-full lg:w-[60%]",
             ].join(" ")}
+            aria-hidden={isHidden}
+            style={{ transitionDuration: `${WIDTH_MS}ms` }}
           >
-            <h2 className="text-white text-xl font-semibold mb-4 text-center lg:text-left">Quick Swap</h2>
-
-            <button
-              onClick={connectInjected}
-              className="mb-4 rounded-xl px-6 py-3 bg-accent hover:bg-primary-400 text-black font-semibold transition-colors block mx-auto lg:mx-0"
+            {/* REVEAL: anchors to the right and expands its width (left border travels from right→left) */}
+            <div
+              className={[
+                "ml-auto",                     // anchor to the right
+                "transition-[width,opacity] ", // animate only width + opacity
+                "duration-[1200ms]",
+                "ease-[cubic-bezier(0.16,1,0.3,1)]",
+                revealWidthClass,
+                revealOpacityClass,
+              ].join(" ")}
+              style={{
+                willChange: "width, opacity",
+                transitionDuration:
+                  chartState === "showing" || chartState === "visible"
+                    ? `${SHOW_MS}ms`
+                    : chartState === "hiding"
+                    ? `${HIDE_MS}ms`
+                    : undefined,
+              }}
             >
-              Connect wallet
-            </button>
+              {/* Actual chart content */}
+              <h2 className="text-white text-xl font-semibold mb-4">ETH/USDT Chart</h2>
+              <div className="h-[500px] w-full bg-gray-700 rounded-xl border border-white/10 flex items-center justify-center">
+                <span className="text-gray-100">Chart placeholder</span>
+              </div>
+            </div>
+          </div>
 
-            <ClientOnly
-              fallback={
-                <div className="bg-gray-800 rounded-lg p-8 text-center text-white">
-                  Loading swap widget...
-                </div>
-              }
+          {/* RIGHT (Swap) */}
+          <div
+            className={[
+              "transition-[width] duration-[420ms]",
+              "ease-[cubic-bezier(0.33,0,0.2,1)]",
+              isCollapsing ? "w-full lg:w-[720px] lg:max-w-[720px] mx-auto" : "lg:w-[40%]",
+              isCollapsing ? "flex flex-col items-center text-center" : "",
+            ].join(" ")}
+            style={{ transitionDuration: `${WIDTH_MS}ms` }}
+          >
+            <h2
+              className={[
+                "text-white text-xl font-semibold mb-4",
+                isCollapsing ? "text-center" : "text-center lg:text-left",
+              ].join(" ")}
             >
-              <SwapWidgetWrapper onConnectWallet={connectInjected} />
-            </ClientOnly>
+              Quick Swap
+            </h2>
 
-            <div className="mt-4 flex justify-center lg:justify-start">
+            <div className={isCollapsing ? "flex justify-center w-full" : ""}>
+              <div className="h-[520px] w-full bg-gray-700 rounded-xl border border-white/10 flex items-center justify-center">
+                <span className="text-gray-100">Swap placeholder</span>
+              </div>
+            </div>
+
+            <div className={["mt-4 flex", isCollapsing ? "justify-center" : "justify-center lg:justify-start"].join(" ")}>
               <button
                 onClick={onToggleChart}
                 className="inline-flex items-center gap-2 rounded-xl px-5 py-2 border border-white/30 text-white hover:border-white/60 transition"
-                aria-pressed={chartState !== "hidden"}
+                aria-pressed={!isHidden}
               >
-                {chartState === "hidden" ? (
+                {isHidden ? (
                   <>
                     <EyeIcon className="w-5 h-5" />
                     Expand chart
