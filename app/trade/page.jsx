@@ -50,6 +50,7 @@ export default function Trade() {
   };
 
   const ANIM_MS = 700;
+  const HIDE_DELAY_MS = 100;
   const [chartState, setChartState] = useState("visible"); // "visible" | "hiding" | "hidden" | "showing"
   const hideTimer = useRef(null);
   const showTimer = useRef(null);
@@ -58,7 +59,7 @@ export default function Trade() {
     if (chartState === "visible" || chartState === "showing") {
       setChartState("hiding");
       if (hideTimer.current) clearTimeout(hideTimer.current);
-      hideTimer.current = setTimeout(() => setChartState("hidden"), ANIM_MS);
+      hideTimer.current = setTimeout(() => setChartState("hidden"), HIDE_DELAY_MS);
     } else {
       setChartState("showing");
       if (showTimer.current) clearTimeout(showTimer.current);
@@ -103,11 +104,18 @@ export default function Trade() {
               "lg:w-[60%] transition-all duration-700 ease-out",
               chartState === "hidden" 
                 ? "lg:opacity-0 lg:transform lg:scale-95 lg:-translate-x-full" 
+                : chartState === "hiding"
+                ? "lg:opacity-0 lg:transform lg:scale-100 lg:translate-x-0"
                 : "lg:opacity-100 lg:transform lg:scale-100 lg:translate-x-0"
             ].join(" ")}
           >
             {chartVisible && (
-              <div className="w-full">
+              <div 
+                className={[
+                  "w-full transition-opacity duration-700 ease-out",
+                  chartState === "hiding" ? "opacity-0" : "opacity-100"
+                ].join(" ")}
+              >
                 <h2 className="text-white text-xl font-semibold mb-4">ETH/USDT Chart</h2>
                 <div className="bg-gray-800 rounded-lg p-4">
                   <ClientOnly
