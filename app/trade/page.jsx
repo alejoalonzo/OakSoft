@@ -2,8 +2,8 @@
 
 import { SwapWidget } from "@relayprotocol/relay-kit-ui";
 import { useConnect } from "wagmi";
-import SimpleTradingViewWidget from "../components/SimpleTradingViewWidget";
-import ClientOnly from "../components/ClientOnly";
+import SimpleTradingViewWidget from "../../components/SimpleTradingViewWidget";
+import ClientOnly from "../../components/ClientOnly";
 
 export default function Trade() {
   const { connect, connectors } = useConnect();
@@ -55,7 +55,7 @@ export default function Trade() {
         {/* Swap Widget */}
         <div className="max-w-2xl mx-auto">
           <h2 className="text-white text-xl font-semibold mb-4 text-center">Quick Swap</h2>
-          <button onClick={connectInjected} className="mb-4 rounded-xl px-4 py-2 bg-white text-black block mx-auto">
+          <button onClick={connectInjected} className="mb-4 rounded-xl px-6 py-3 bg-accent hover:bg-primary-400 text-black font-semibold transition-colors block mx-auto">
             Connect wallet
           </button>
 
