@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import SimpleTradingViewWidget from "../../components/SimpleTradingViewWidget";
 
 function EyeIcon(props) {
   return (
@@ -140,7 +139,10 @@ export default function Trade() {
                     WebkitClipPath: 'inset(0px round 11px)'
                   }}
                 >
-                  <SimpleTradingViewWidget symbol="ETHUSDT" />
+                  {/* Chart placeholder - implement your own chart solution here */}
+                  <div className="flex items-center justify-center h-full text-gray-400">
+                    Chart will be implemented here
+                  </div>
                 </div>
               </div>
             </div>
