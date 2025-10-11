@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import SwapColumn from "../../components/Swap";
+import TokenChart from "../../components/TokenChart";
 
 function EyeIcon(props) {
   return (
@@ -147,9 +148,9 @@ export default function Trade() {
                     WebkitClipPath: 'inset(0px round 11px)'
                   }}
                 >
-                  {/* Chart placeholder - implement your own chart solution here */}
+                  
                   <div className="flex items-center justify-center h-full text-gray-400">
-                    Chart will be implemented here
+                    <TokenChart token={selectedToken} />
                   </div>
                 </div>
               </div>

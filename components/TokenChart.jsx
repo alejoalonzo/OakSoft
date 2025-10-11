@@ -2,9 +2,9 @@
 
 const DUNE_EMBEDS = {
   // ⬇️ Reemplaza estas URLs por tus “Embed link” reales desde Dune (Share → Embed)
-  USDC: "https://dune.com/embeds/000000/000000/iframe", 
-  DAI:  "https://dune.com/embeds/000000/000000/iframe",
-  LINK: "https://dune.com/embeds/000000/000000/iframe",
+  USDC: "https://dune.com/embeds/5944653/9596820", 
+  DAI:  "https://dune.com/embeds/5946059/9596835",
+  LINK: "https://dune.com/embeds/5946066/9596845",
 };
 
 export default function TokenChart({ token }) {
