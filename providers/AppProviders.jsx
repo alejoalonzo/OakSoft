@@ -1,47 +1,50 @@
-'use client'
+"use client";
 
-// Global providers for data fetching (React Query), Relay UI, and Wagmi (wallet state)
-import { RelayKitProvider } from '@relayprotocol/relay-kit-ui'
-import {
-  convertViemChainToRelayChain,
-  MAINNET_RELAY_API,
-} from '@relayprotocol/relay-sdk'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { RelayKitProvider } from "@relayprotocol/relay-kit-ui";
+import { MAINNET_RELAY_API, convertViemChainToRelayChain } from "@relayprotocol/relay-sdk";
+import { useState } from "react";
+import { WagmiProvider, createConfig, http } from "wagmi";
+import { mainnet, base, arbitrum, optimism } from "wagmi/chains";
+import { walletConnect } from "wagmi/connectors";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { createConfig, http, WagmiProvider } from 'wagmi'
-import { mainnet } from 'wagmi/chains'
-import { injected } from 'wagmi/connectors' // enables MetaMask / Coinbase / Brave
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID;
+const duneKey = process.env.NEXT_PUBLIC_DUNE_API_KEY;
 
-const queryClient = new QueryClient()
+const relayChains = [convertViemChainToRelayChain(base)];
 
-// Relay needs its own chain format; convert viem/wagmi chain -> Relay chain
-const relayChains = [convertViemChainToRelayChain(mainnet)]
 
-// Minimal Wagmi config: HTTP transport + an injected connector for EVM wallets
 const wagmiConfig = createConfig({
-  chains: [mainnet],
-  transports: { [mainnet.id]: http() },
-  connectors: [injected()],
-})
+  chains: [mainnet, base, arbitrum, optimism],
+  connectors: [
+    walletConnect({
+      projectId,
+      showQrModal: true,
+    }),
+  ],
+  transports: {
+    [mainnet.id]: http(),
+    [base.id]: http(),
+    [arbitrum.id]: http(),
+    [optimism.id]: http(),
+  },
+});
 
-export default function AppProviders({ children }) {
+export default function Web3Providers({ children }) {
+  const [queryClient] = useState(() => new QueryClient());
   return (
     <QueryClientProvider client={queryClient}>
-      <RelayKitProvider
-        options={{
-          appName: 'OakSoft DeFi',
-          // Your app fee in basis points (100 = 1%). Change recipient to your address.
-          appFees: [{ recipient: '0xYourAddressHere...', fee: '100' }],
-          // Optional Dune API key to enable insights/charts
-          duneConfig: process.env.NEXT_PUBLIC_DUNE_API_KEY
-            ? { apiKey: process.env.NEXT_PUBLIC_DUNE_API_KEY }
-            : undefined,
-          chains: relayChains,
-          baseApiUrl: MAINNET_RELAY_API,
-        }}
-      >
-        <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
-      </RelayKitProvider>
+          <RelayKitProvider
+            options={{
+              appName: "OakSoft DeFi",
+              chains: relayChains,
+              baseApiUrl: MAINNET_RELAY_API,
+              ...(duneKey ? { duneConfig: { apiKey: duneKey } } : {}),
+              themeScheme: "dark",
+              // appFees: [{ recipient: "0x...", fee: "100" }], // opcional (1%)
+            }}
+    ></RelayKitProvider>
+      <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
     </QueryClientProvider>
-  )
+  );
 }

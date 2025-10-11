@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import SwapColumn from "../../components/Swap";
 
 function EyeIcon(props) {
   return (
@@ -29,6 +30,10 @@ export default function Trade() {
   const [chartState, setChartState] = useState("visible"); // "visible" | "hiding" | "hidden" | "showing"
   const hideTimer = useRef(null);
   const showTimer = useRef(null);
+
+  const TOKENS = ["USDC", "WBTC", "DAI", "ARB", "OP"];
+  const [selectedToken, setSelectedToken] = useState("USDC"); // BUY token
+
 
   const onToggleChart = () => {
     if (chartState === "visible" || chartState === "showing") {
@@ -122,7 +127,10 @@ export default function Trade() {
               }}
             >
               {/* Actual chart content */}
-              <h2 className="text-white text-xl font-semibold mb-4">ETH/USDT Chart</h2>
+              <h2 className="text-white text-xl font-semibold mb-4">
+                ETH/{selectedToken} Chart
+              </h2>
+
               <div 
                 className="h-[500px] w-full relative border border-white/10"
                 style={{
@@ -167,9 +175,15 @@ export default function Trade() {
               Quick Swap
             </h2>
 
+            {/* Select Coin */}
             <div className={isCollapsing ? "flex justify-center w-full" : ""}>
               <div className="h-[520px] w-full bg-gray-700 rounded-xl border border-white/10 flex items-center justify-center">
-                <span className="text-gray-100">Swap placeholder</span>
+                <div className={isCollapsing ? "flex justify-center w-full" : ""}>
+                  <SwapColumn
+                    selectedToken={selectedToken}
+                    onSelectToken={setSelectedToken}
+                  />
+                </div>
               </div>
             </div>
 
