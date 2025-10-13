@@ -32,7 +32,7 @@ export default function Trade() {
   const hideTimer = useRef(null);
   const showTimer = useRef(null);
 
-  const TOKENS = ["USDC", "WBTC", "DAI", "ARB", "OP"];
+  const TOKENS = ["USDC", "DAI", "LINK"];
   const [selectedToken, setSelectedToken] = useState("USDC"); // BUY token
 
 
@@ -76,6 +76,7 @@ export default function Trade() {
 
   return (
     <div className="min-h-screen bg-gray-900 w-full">
+
       {/* Title */}
       <div
         className="flex justify-center pt-[60px] mb-[60px]"

@@ -2,6 +2,8 @@
 import { useMemo } from "react";
 import { SwapWidget } from "@relayprotocol/relay-kit-ui";
 import { useConnect } from "wagmi";
+import { useAccount } from "wagmi";
+import { openConnectModal } from "../providers/AppProviders";
 
 const CHAIN_ID = 8453; // Base
 
@@ -38,12 +40,21 @@ const TOKEN_MAP = {
 };
 
 export default function SwapColumn({ selectedToken, onSelectToken }) {
-  const { connect, connectors } = useConnect();
+  const { isConnected } = useAccount();
+  
   const tabs = useMemo(() => Object.keys(TOKEN_MAP), []);
 
+  // Debug logging
+  console.log('SwapColumn rendered with:', {
+    selectedToken,
+    isConnected,
+    fromToken: ETH_BASE,
+    toToken: TOKEN_MAP[selectedToken]
+  });
+
   const onConnectWallet = () => {
-    const connector = connectors?.[0];
-    if (connector) connect({ connector });
+    console.log('Manual wallet connection triggered');
+    openConnectModal();
   };
 
   return (
@@ -66,19 +77,20 @@ export default function SwapColumn({ selectedToken, onSelectToken }) {
         ))}
       </div>
 
-      {/* Widget: Sell = ETH fijo, Buy = token seleccionado */}
-      <SwapWidget
-        fromToken={ETH_BASE}
-        setFromToken={() => {}}
-        lockFromToken
-        toToken={TOKEN_MAP[selectedToken]}
-        setToToken={() => {}}
-        supportedWalletVMs={["evm"]}
-        onConnectWallet={onConnectWallet}
-        defaultAmount={"0.1"}
-        lockChainId={CHAIN_ID}
-        singleChainMode
-      />
+      {/* Widget: Sell = ETH fixed, Buy = token selected */}
+        <SwapWidget
+          fromToken={ETH_BASE}
+          setFromToken={() => {}}
+          lockFromToken
+          toToken={TOKEN_MAP[selectedToken]}
+          setToToken={() => {}}
+          supportedWalletVMs={["evm"]}
+          onConnectWallet={onConnectWallet}
+          defaultAmount={"0.1"}
+          lockChainId={CHAIN_ID}
+          singleChainMode
+          enableWalletAggregator={false} // Disable auto wallet aggregation
+        />
     </div>
   );
 }
