@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import SwapColumn from "../../components/Swap";
-import TokenChart from "../../components/TokenChart";
+import TokenTVChart from "../../components/TokenTvChart";
+
 
 function EyeIcon(props) {
   return (
@@ -32,8 +33,8 @@ export default function Trade() {
   const hideTimer = useRef(null);
   const showTimer = useRef(null);
 
-  const TOKENS = ["USDC", "DAI", "LINK"];
-  const [selectedToken, setSelectedToken] = useState("USDC"); // BUY token
+  const TOKENS = ["DAI", "LINK", "USDC"]; // Changed order - DAI first
+  const [selectedToken, setSelectedToken] = useState("DAI"); // Start with DAI instead of USDC
 
 
   const onToggleChart = () => {
@@ -151,7 +152,10 @@ export default function Trade() {
                 >
                   
                   <div className="flex items-center justify-center h-full text-gray-400">
-                    <TokenChart token={selectedToken} />
+                    {/* <TokenChart token={selectedToken} /> */}
+                    {/* <DexScreenerChart tokenSymbol={selectedToken} /> */}
+                    <TokenTVChart token={selectedToken} />
+
                   </div>
                 </div>
               </div>

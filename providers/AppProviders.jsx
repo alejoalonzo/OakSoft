@@ -11,7 +11,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID;
-const duneKey = process.env.NEXT_PUBLIC_DUNE_API_KEY;
+// Completely remove Dune references
+// const duneKey = process.env.NEXT_PUBLIC_DUNE_API_KEY;
 
 const relayChains = [convertViemChainToRelayChain(base)];
 
@@ -19,8 +20,14 @@ const wagmiConfig = createConfig({
   chains: [mainnet, base, arbitrum, optimism],
   connectors: [
     walletConnect({
-      projectId,
+      projectId: projectId || "dummy_project_id", // Fallback to prevent errors
       showQrModal: false, // Prevent auto-popup
+      metadata: {
+        name: "OakSoft DeFi",
+        description: "Decentralized Finance Platform",
+        url: "https://localhost:3000", // Update this to your domain in production
+        icons: []
+      }
     }),
   ],
   transports: {
@@ -35,17 +42,27 @@ const wagmiConfig = createConfig({
 // Create Web3Modal configuration - its initialized only when needed
 let web3Modal;
 
-// function to initialize the modal only when needed
+// Function to initialize the modal only when needed
 export const initWeb3Modal = () => {
   if (typeof window !== 'undefined' && projectId && !web3Modal) {
-    web3Modal = createWeb3Modal({
-      wagmiConfig,                               
-      projectId: projectId,
-      chains: [base, mainnet, arbitrum, optimism],
-      themeMode: 'dark',
-      enableAnalytics: false, // Disable analytics to prevent auto-opens
-      enableOnramp: false, // Disable onramp features
-    });
+    try {
+      web3Modal = createWeb3Modal({
+        wagmiConfig,                               
+        projectId: projectId,
+        chains: [base, mainnet, arbitrum, optimism],
+        themeMode: 'dark',
+        enableAnalytics: false, // Disable analytics to prevent auto-opens
+        enableOnramp: false, // Disable onramp features
+        metadata: {
+          name: "OakSoft DeFi",
+          description: "Decentralized Finance Platform",
+          url: "https://localhost:3000", // Update this to your domain in production
+          icons: []
+        }
+      });
+    } catch (error) {
+      console.warn('Failed to initialize Web3Modal:', error);
+    }
   }
   return web3Modal;
 };
@@ -69,22 +86,25 @@ export default function Web3Providers({ children }) {
           }
           return failureCount < 3;
         },
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        cacheTime: 10 * 60 * 1000, // 10 minutes
       },
     },
   }));
   
   return (
     <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={wagmiConfig}>
+      <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
         <RelayKitProvider
           options={{
             appName: "OakSoft DeFi",
             chains: relayChains,
             baseApiUrl: MAINNET_RELAY_API,
-            ...(duneKey ? { duneConfig: { apiKey: duneKey } } : {}),
+            // Temporarily disable Dune to avoid CORS issues
+            // ...(duneKey ? { duneConfig: { apiKey: duneKey } } : {}),
             themeScheme: "dark",
-            // appFees: [{ recipient: "0x...", fee: "100" }], // opcional (1%)
             autoConnect: false, // Prevent auto-connection
+            source: "oaksoft-defi", // Add source identifier
           }}
         >
           {children}
