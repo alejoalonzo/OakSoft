@@ -102,9 +102,11 @@ export default function Trade() {
           {/* LEFT (Chart) - outer container: reserved layout width */}
           <div
             className={[
-              "overflow-hidden transition-[width] duration-[420ms]",
+              "overflow-hidden transition-[width,height] duration-[420ms]",
               "ease-[cubic-bezier(0.33,0,0.2,1)]",
-              isCollapsing ? "w-0 lg:w-0" : "w-full lg:w-[60%]",
+              // En móvil: cuando se oculta, w-0 y h-0 para no ocupar espacio
+              // En desktop: cuando se oculta, solo w-0 (mantiene comportamiento original)
+              isCollapsing ? "w-0 h-0 lg:h-auto lg:w-0" : "w-full lg:w-[60%]",
             ].join(" ")}
             aria-hidden={isHidden}
             style={{ transitionDuration: `${WIDTH_MS}ms` }}
