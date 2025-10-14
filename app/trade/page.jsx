@@ -172,28 +172,16 @@ export default function Trade() {
             ].join(" ")}
             style={{ transitionDuration: `${WIDTH_MS}ms` }}
           >
-            <h2
-              className={[
-                "text-white text-xl font-semibold mb-4",
-                isCollapsing ? "text-center" : "text-center lg:text-left",
-              ].join(" ")}
-            >
-              Quick Swap
-            </h2>
-
-            {/* Select Coin */}
-            <div className={isCollapsing ? "flex justify-center w-full" : ""}>
-              <div className="h-[520px] w-full bg-gray-700 rounded-xl border border-white/10 flex items-center justify-center">
-                <div className={isCollapsing ? "flex justify-center w-full" : ""}>
-                  <SwapColumn
-                    selectedToken={selectedToken}
-                    onSelectToken={setSelectedToken}
-                  />
-                </div>
-              </div>
+            {/* Componente Swap directamente */}
+            <div className={isCollapsing ? "flex flex-col items-center w-full" : ""}>
+              <SwapColumn
+                selectedToken={selectedToken}
+                onSelectToken={setSelectedToken}
+              />
             </div>
 
-            <div className={["mt-4 flex", isCollapsing ? "justify-center" : "justify-center lg:justify-start"].join(" ")}>
+            {/* Botón Hide/Expand debajo del componente Swap */}
+            <div className={["mt-6 flex", isCollapsing ? "justify-center" : "justify-center lg:justify-start"].join(" ")}>
               <button
                 onClick={onToggleChart}
                 className="inline-flex items-center gap-2 rounded-xl px-5 py-2 border border-white/30 text-white hover:border-white/60 transition"
