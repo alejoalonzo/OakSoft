@@ -79,7 +79,7 @@ export default function Navigation() {
             <button
               type="button"
               onClick={toggleMenu}
-              className="hidden md:inline-flex flex-col justify-center items-end focus:outline-none"
+              className="hidden md:inline-flex flex-col justify-center items-end focus:outline-none cursor-pointer"
               style={{
                 marginTop: "34px",
                 marginRight: "43px",
@@ -135,7 +135,7 @@ export default function Navigation() {
             <button
               type="button"
               onClick={toggleMenu}
-              className="md:hidden inline-flex flex-col justify-center items-end focus:outline-none"
+              className="md:hidden inline-flex flex-col justify-center items-end focus:outline-none cursor-pointer"
               style={{
                 marginTop: "22px",
                 marginRight: "24px",

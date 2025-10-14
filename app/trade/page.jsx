@@ -131,7 +131,7 @@ export default function Trade() {
             >
               {/* Actual chart content */}
               <h2 className="text-white text-xl font-semibold mb-4">
-                ETH/{selectedToken} Chart
+                {selectedToken} Chart
               </h2>
 
               <div 
