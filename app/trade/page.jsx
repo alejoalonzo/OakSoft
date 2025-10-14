@@ -173,7 +173,7 @@ export default function Trade() {
             style={{ transitionDuration: `${WIDTH_MS}ms` }}
           >
             {/* Componente Swap directamente */}
-            <div className={isCollapsing ? "flex flex-col items-center w-full" : ""}>
+            <div className={isCollapsing ? "flex flex-col items-center w-full" : "md:flex md:justify-center lg:justify-start"}>
               <SwapColumn
                 selectedToken={selectedToken}
                 onSelectToken={setSelectedToken}
