@@ -82,7 +82,7 @@ export default function SwapColumn({ selectedToken, onSelectToken }) {
   if (!currentToken) {
     console.error('Token not found:', selectedToken);
     return (
-      <div className="w-full bg-gray-800 rounded-xl border border-white/10 p-4 space-y-3">
+      <div className="w-fit bg-gray-800 rounded-xl border border-white/10 p-4 space-y-3">
         <div className="text-red-400 text-center">
           Error: Token "{selectedToken}" not found
         </div>
@@ -93,7 +93,7 @@ export default function SwapColumn({ selectedToken, onSelectToken }) {
   // Show loading state until initialized
   if (!isInitialized) {
     return (
-      <div className="w-full bg-gray-800 rounded-xl border border-white/10 p-4 space-y-3">
+      <div className="w-fit bg-gray-800 rounded-xl border border-white/10 p-4 space-y-3">
         <div className="text-white/60 text-center">
           Loading swap widget...
         </div>
@@ -102,7 +102,7 @@ export default function SwapColumn({ selectedToken, onSelectToken }) {
   }
 
   return (
-    <div className="w-full bg-gray-800 rounded-xl border border-white/10 p-4 space-y-3">
+    <div className="w-fit bg-gray-800 rounded-xl border border-white/10 p-4 space-y-3">
       {/* Tabs */}
       <div className="flex flex-wrap gap-2 mb-1">
         {tabs.map((t) => (
