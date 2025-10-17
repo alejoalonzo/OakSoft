@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@relayprotocol/relay-kit-hooks": "^2.0.6",
     "@relayprotocol/relay-kit-ui": "^5.0.3",
     "@tanstack/react-query": "^5.90.2",
     "@web3modal/wagmi": "^5.1.11",

@@ -1,142 +1,118 @@
+// providers/AppProviders.jsx
 "use client";
+
+import { useMemo, useState, useEffect } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+import { WagmiProvider, createConfig, http } from "wagmi";
+import { walletConnect } from "wagmi/connectors";
+import { mainnet, base, arbitrum, optimism } from "wagmi/chains";
 
 import { RelayKitProvider } from "@relayprotocol/relay-kit-ui";
 import { MAINNET_RELAY_API, convertViemChainToRelayChain } from "@relayprotocol/relay-sdk";
-import { useState } from "react";
-import { WagmiProvider, createConfig, http } from "wagmi";
-import { createWeb3Modal } from '@web3modal/wagmi/react';
- import { mainnet, base, arbitrum, optimism, polygon, bsc, avalanche, fantom, linea, zksync, scroll } from "wagmi/chains";
-import { walletConnect } from "wagmi/connectors";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useRelayChains } from "@relayprotocol/relay-kit-hooks";
 
+import { createWeb3Modal } from "@web3modal/wagmi/react";
 
+// ===== env =====
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID;
-// Completely remove Dune references
-// const duneKey = process.env.NEXT_PUBLIC_DUNE_API_KEY;
 
-const relayChains = [
-  convertViemChainToRelayChain(mainnet),
-  convertViemChainToRelayChain(base),
-  convertViemChainToRelayChain(arbitrum),
-  convertViemChainToRelayChain(optimism),
-  convertViemChainToRelayChain(polygon),
-  convertViemChainToRelayChain(bsc),
-  convertViemChainToRelayChain(avalanche),
-  convertViemChainToRelayChain(fantom),
-  convertViemChainToRelayChain(linea),
-  convertViemChainToRelayChain(zksync),
-  convertViemChainToRelayChain(scroll),
-];
+// keep a reference to Web3Modal
+let web3Modal = null;
+export const openConnectModal = () => {
+  if (web3Modal) web3Modal.open();
+  else console.warn("Web3Modal aún no está listo");
+};
 
-const wagmiConfig = createConfig({
-  chains: [mainnet, base, arbitrum, optimism, polygon, bsc, avalanche, fantom, linea, zksync, scroll],
-  autoConnect: false, // Prevent auto-connection
-  connectors: [
-    walletConnect({
-      projectId: projectId || "dummy_project_id", // Fallback to prevent errors
-      showQrModal: false, // Prevent auto-popup
+// ---------- external: Only QueryClient ----------
+export default function AppProviders({ children }) {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: (n, err) => (err?.response?.status === 400 ? false : n < 3),
+            staleTime: 5 * 60 * 1000,
+            cacheTime: 10 * 60 * 1000,
+          },
+        },
+      })
+  );
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ProvidersWithChains>{children}</ProvidersWithChains>
+    </QueryClientProvider>
+  );
+}
+
+// ---------- Internal: useRelayChains ok ----------
+function ProvidersWithChains({ children }) {
+  // bring in chains from Relay
+  const { viemChains, relayChains } = useRelayChains(MAINNET_RELAY_API);
+
+  // Fallback while loading chains from Relay
+  const evmChains = viemChains?.length ? viemChains : [mainnet, base, arbitrum, optimism];
+  const relayChainsSafe =
+    relayChains?.length
+      ? relayChains
+      : [mainnet, base, arbitrum, optimism].map(convertViemChainToRelayChain);
+
+  // Config of wagmi
+  const wagmiConfig = useMemo(() => {
+    return createConfig({
+      chains: evmChains,
+      connectors: [
+        walletConnect({
+          projectId: projectId || "dummy_project_id",
+          showQrModal: false, 
+          metadata: {
+            name: "OakSoft DeFi",
+            description: "Decentralized Finance Platform",
+            url: "https://localhost:3000",
+            icons: [],
+          },
+        }),
+      ],
+      transports: Object.fromEntries(evmChains.map((c) => [c.id, http()])),
+    });
+  }, [evmChains]);
+
+  // initialize Web3Modal if we have wagmi + chains
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!projectId) return;
+    if (web3Modal) return;
+
+    web3Modal = createWeb3Modal({
+      wagmiConfig,
+      projectId,
+      chains: evmChains,
+      themeMode: "dark",
+      enableAnalytics: false,
+      enableOnramp: false,
       metadata: {
         name: "OakSoft DeFi",
         description: "Decentralized Finance Platform",
-        url: "https://localhost:3000", // Update this to your domain in production
-        icons: []
-      }
-    }),
-  ],
-  transports: {
-    [mainnet.id]: http(),
-    [base.id]: http(),
-    [arbitrum.id]: http(),
-    [optimism.id]: http(),
-    [polygon.id]: http(),
-    [bsc.id]: http(),
-    [avalanche.id]: http(),
-    [fantom.id]: http(),
-    [linea.id]: http(),
-    [zksync.id]: http(),
-    [scroll.id]: http(),
-  },
-});
-
-//Modal CONECT WALLET****
-// Create Web3Modal configuration - its initialized only when needed
-let web3Modal;
-
-// Function to initialize the modal only when needed
-export const initWeb3Modal = () => {
-  if (typeof window !== 'undefined' && projectId && !web3Modal) {
-    try {
-      web3Modal = createWeb3Modal({
-        wagmiConfig,                               
-        projectId: projectId,
-        chains: [base, mainnet, arbitrum, optimism, polygon, bsc, avalanche, fantom, linea, zksync, scroll],
-        themeMode: 'dark',
-        enableAnalytics: false, // Disable analytics to prevent auto-opens
-        enableOnramp: false, // Disable onramp features
-        metadata: {
-          name: "OakSoft DeFi",
-          description: "Decentralized Finance Platform",
-          url: "https://localhost:3000", // Update this to your domain in production
-          icons: []
-        }
-      });
-    } catch (error) {
-      console.warn('Failed to initialize Web3Modal:', error);
-    }
-  }
-  return web3Modal;
-};
-
-// Function to open the connect modal
-export const openConnectModal = () => {
-  const modal = initWeb3Modal();
-  if (modal) {
-    modal.open();
-  }
-};
-
-export default function Web3Providers({ children }) {
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: (failureCount, error) => {
-          // Don't retry on 400 errors
-          if (error?.response?.status === 400) {
-            return false;
-          }
-          return failureCount < 3;
-        },
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        cacheTime: 10 * 60 * 1000, // 10 minutes
+        url: "https://localhost:3000",
+        icons: [],
       },
-    },
-  }));
-  
+    });
+  }, [evmChains, wagmiConfig]);
+
+  // Recommended: Relay → Wagmi → children
   return (
-    // <QueryClientProvider client={queryClient}>
-    //   <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
-    //     <RelayKitProvider
-    //       options={{
-    //         appName: "OakSoft DeFi",
-    //         chains: relayChains,
-    //         baseApiUrl: MAINNET_RELAY_API,
-    //         // Temporarily disable Dune to avoid CORS issues
-    //         // ...(duneKey ? { duneConfig: { apiKey: duneKey } } : {}),
-    //         themeScheme: "dark",
-    //         autoConnect: false, // Prevent auto-connection
-    //         source: "oaksoft-defi", // Add source identifier
-    //       }}
-    //     >
-    //       {children}
-    //     </RelayKitProvider>
-    //   </WagmiProvider>
-    // </QueryClientProvider>
-    <QueryClientProvider client={queryClient}>
-      <RelayKitProvider options={{ /* ... */ }}>
-        <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
-          {children}
-        </WagmiProvider>
-      </RelayKitProvider>
-    </QueryClientProvider>
+    <RelayKitProvider
+      options={{
+        appName: "OakSoft DeFi",
+        chains: relayChainsSafe, // All chains supported by Relay
+        baseApiUrl: MAINNET_RELAY_API,
+        themeScheme: "dark",
+      }}
+    >
+      <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
+        {children}
+      </WagmiProvider>
+    </RelayKitProvider>
   );
 }
