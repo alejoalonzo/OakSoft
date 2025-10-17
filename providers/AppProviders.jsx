@@ -5,7 +5,7 @@ import { MAINNET_RELAY_API, convertViemChainToRelayChain } from "@relayprotocol/
 import { useState } from "react";
 import { WagmiProvider, createConfig, http } from "wagmi";
 import { createWeb3Modal } from '@web3modal/wagmi/react';
-import { mainnet, base, arbitrum, optimism } from "wagmi/chains";
+ import { mainnet, base, arbitrum, optimism, polygon, bsc, avalanche, fantom, linea, zksync, scroll } from "wagmi/chains";
 import { walletConnect } from "wagmi/connectors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -14,10 +14,23 @@ const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID;
 // Completely remove Dune references
 // const duneKey = process.env.NEXT_PUBLIC_DUNE_API_KEY;
 
-const relayChains = [convertViemChainToRelayChain(base)];
+const relayChains = [
+  convertViemChainToRelayChain(mainnet),
+  convertViemChainToRelayChain(base),
+  convertViemChainToRelayChain(arbitrum),
+  convertViemChainToRelayChain(optimism),
+  convertViemChainToRelayChain(polygon),
+  convertViemChainToRelayChain(bsc),
+  convertViemChainToRelayChain(avalanche),
+  convertViemChainToRelayChain(fantom),
+  convertViemChainToRelayChain(linea),
+  convertViemChainToRelayChain(zksync),
+  convertViemChainToRelayChain(scroll),
+];
 
 const wagmiConfig = createConfig({
-  chains: [mainnet, base, arbitrum, optimism],
+  chains: [mainnet, base, arbitrum, optimism, polygon, bsc, avalanche, fantom, linea, zksync, scroll],
+  autoConnect: false, // Prevent auto-connection
   connectors: [
     walletConnect({
       projectId: projectId || "dummy_project_id", // Fallback to prevent errors
@@ -35,6 +48,13 @@ const wagmiConfig = createConfig({
     [base.id]: http(),
     [arbitrum.id]: http(),
     [optimism.id]: http(),
+    [polygon.id]: http(),
+    [bsc.id]: http(),
+    [avalanche.id]: http(),
+    [fantom.id]: http(),
+    [linea.id]: http(),
+    [zksync.id]: http(),
+    [scroll.id]: http(),
   },
 });
 
@@ -49,7 +69,7 @@ export const initWeb3Modal = () => {
       web3Modal = createWeb3Modal({
         wagmiConfig,                               
         projectId: projectId,
-        chains: [base, mainnet, arbitrum, optimism],
+        chains: [base, mainnet, arbitrum, optimism, polygon, bsc, avalanche, fantom, linea, zksync, scroll],
         themeMode: 'dark',
         enableAnalytics: false, // Disable analytics to prevent auto-opens
         enableOnramp: false, // Disable onramp features
@@ -93,23 +113,30 @@ export default function Web3Providers({ children }) {
   }));
   
   return (
+    // <QueryClientProvider client={queryClient}>
+    //   <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
+    //     <RelayKitProvider
+    //       options={{
+    //         appName: "OakSoft DeFi",
+    //         chains: relayChains,
+    //         baseApiUrl: MAINNET_RELAY_API,
+    //         // Temporarily disable Dune to avoid CORS issues
+    //         // ...(duneKey ? { duneConfig: { apiKey: duneKey } } : {}),
+    //         themeScheme: "dark",
+    //         autoConnect: false, // Prevent auto-connection
+    //         source: "oaksoft-defi", // Add source identifier
+    //       }}
+    //     >
+    //       {children}
+    //     </RelayKitProvider>
+    //   </WagmiProvider>
+    // </QueryClientProvider>
     <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
-        <RelayKitProvider
-          options={{
-            appName: "OakSoft DeFi",
-            chains: relayChains,
-            baseApiUrl: MAINNET_RELAY_API,
-            // Temporarily disable Dune to avoid CORS issues
-            // ...(duneKey ? { duneConfig: { apiKey: duneKey } } : {}),
-            themeScheme: "dark",
-            autoConnect: false, // Prevent auto-connection
-            source: "oaksoft-defi", // Add source identifier
-          }}
-        >
+      <RelayKitProvider options={{ /* ... */ }}>
+        <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
           {children}
-        </RelayKitProvider>
-      </WagmiProvider>
+        </WagmiProvider>
+      </RelayKitProvider>
     </QueryClientProvider>
   );
 }
