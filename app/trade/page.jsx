@@ -147,23 +147,30 @@ export default function Trade() {
                     : undefined,
               }}
             >
-              {/* TABS */}
-              <div className="mb-3 flex gap-2">
+              {/* TOKEN TABS AS TITLES */}
+              <div className="mb-6 flex gap-1">
                 <button
                   onClick={() => setActiveTab("SELL")}
-                  className={`px-3 py-1 rounded-lg border ${activeTab==="SELL"?"border-white/70 text-white":"border-white/20 text-white/70"}`}
+                  className={`text-2xl font-semibold transition-all duration-200 ${
+                    activeTab === "SELL" 
+                      ? "text-white border-b-2 border-red-400 pb-1" 
+                      : "text-white/60 hover:text-white/80 pb-1"
+                  }`}
                 >
-                  SELL
+                  {sell.symbol}
                 </button>
+                <span className="text-white/40 text-2xl font-semibold self-end pb-1 mx-2">/</span>
                 <button
                   onClick={() => setActiveTab("BUY")}
-                  className={`px-3 py-1 rounded-lg border ${activeTab==="BUY"?"border-white/70 text-white":"border-white/20 text-white/70"}`}
+                  className={`text-2xl font-semibold transition-all duration-200 ${
+                    activeTab === "BUY" 
+                      ? "text-white border-b-2 border-green-400 pb-1" 
+                      : "text-white/60 hover:text-white/80 pb-1"
+                  }`}
                 >
-                  BUY
+                  {buy.symbol}
                 </button>
               </div>
-
-              <h2 className="text-white text-xl font-semibold mb-4">{current.symbol}</h2>
 
               <div 
                 className="h-[500px] w-full relative border border-white/10"

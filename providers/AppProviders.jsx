@@ -17,6 +17,13 @@ import { createWeb3Modal } from "@web3modal/wagmi/react";
 // ===== env =====
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID;
 
+// Debug logging for environment variables
+if (typeof window !== "undefined") {
+  console.log("🔧 Environment check:");
+  console.log("- WalletConnect Project ID:", projectId ? "✅ Set" : "❌ Missing");
+  console.log("- Environment:", process.env.NODE_ENV);
+}
+
 // keep a reference to Web3Modal
 let web3Modal = null;
 export const openConnectModal = () => {
@@ -24,6 +31,10 @@ export const openConnectModal = () => {
     web3Modal.open();
   } else {
     console.warn("⚠️ Web3Modal is not ready. Please check your WalletConnect Project ID configuration.");
+    console.warn("📋 To fix this:");
+    console.warn("1. Get a project ID from https://cloud.walletconnect.com");
+    console.warn("2. Add NEXT_PUBLIC_WALLETCONNECT_ID=your_project_id to .env.local");
+    console.warn("3. Restart the development server");
     // Optionally show a user-friendly message
     alert("Wallet connection is not available. Please check the console for configuration details.");
   }
@@ -36,9 +47,33 @@ export default function AppProviders({ children }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            retry: (n, err) => (err?.response?.status === 400 ? false : n < 3),
+            retry: (failureCount, error) => {
+              // Don't retry on 400 Bad Request errors
+              if (error?.response?.status === 400) {
+                console.error("❌ 400 Bad Request - not retrying:", {
+                  url: error?.config?.url,
+                  message: error?.message,
+                  data: error?.config?.data
+                });
+                return false;
+              }
+              // Don't retry on 401/403 auth errors
+              if (error?.response?.status === 401 || error?.response?.status === 403) {
+                console.error("🔐 Authentication error - not retrying:", error?.response?.status);
+                return false;
+              }
+              // Retry up to 3 times for other errors
+              return failureCount < 3;
+            },
             staleTime: 5 * 60 * 1000,
             cacheTime: 10 * 60 * 1000,
+            onError: (error) => {
+              console.error("🚨 Query error:", {
+                message: error?.message,
+                status: error?.response?.status,
+                url: error?.config?.url
+              });
+            }
           },
         },
       })
