@@ -33,10 +33,6 @@ export default function Trade() {
   const hideTimer = useRef(null);
   const showTimer = useRef(null);
 
-  const TOKENS = ["DAI", "LINK", "USDC"]; // Changed order - DAI first
-  const [selectedToken, setSelectedToken] = useState("DAI"); // Start with DAI instead of USDC
-
-
   const onToggleChart = () => {
     if (chartState === "visible" || chartState === "showing") {
       // HIDE: only fade and collapse width quickly
@@ -142,7 +138,7 @@ export default function Trade() {
             >
               {/* Actual chart content */}
               <h2 className="text-white text-xl font-semibold mb-4">
-                {selectedToken} Chart
+                {sell.symbol} Chart
               </h2>
 
               <div 
@@ -187,8 +183,6 @@ export default function Trade() {
             {/* Componente Swap directamente */}
             <div className={isCollapsing ? "flex flex-col items-center w-full" : "md:flex md:justify-center lg:justify-start"}>
               <SwapColumn
-                selectedToken={selectedToken}
-                onSelectToken={setSelectedToken}
                 onSellTokenChange={handleSellTokenChange}
               />
             </div>
