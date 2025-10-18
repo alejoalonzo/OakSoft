@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import SwapColumn from "../../components/Swap";
-import TokenTVChart from "../../components/TokenTvChart";
+import ChartSmart from "../../components/ChartSmart";
 
 
 function EyeIcon(props) {
@@ -51,8 +51,14 @@ export default function Trade() {
     }
   };
 
+  const [sell, setSell] = useState({ symbol: "ETH", address: null, chainId: 1 });
+
   const handleSellTokenChange = (t) =>
-  setSelectedToken(t?.symbol || t?.ticker || t?.name || "ETH");
+  setSell({
+      symbol: (t?.symbol || "ETH").toUpperCase(),
+      address: t?.address || t?.token?.address || null,
+      chainId: t?.chainId || t?.token?.chainId || 1,
+    })
 
   useEffect(() => {
     return () => {
@@ -159,7 +165,8 @@ export default function Trade() {
                   <div className="flex items-center justify-center h-full text-gray-400">
                     {/* <TokenChart token={selectedToken} /> */}
                     {/* <DexScreenerChart tokenSymbol={selectedToken} /> */}
-                    <TokenTVChart token={selectedToken} />
+                    {/* <TokenTVChart token={selectedToken} /> */}
+                    <ChartSmart symbol={sell.symbol} address={sell.address} chainId={sell.chainId} />
 
                   </div>
                 </div>
