@@ -1,10 +1,11 @@
+// components/Swap.jsx
 "use client";
 
 import { useAccount } from "wagmi"; 
 import { SwapWidget } from "@relayprotocol/relay-kit-ui";
 import { openConnectModal } from "../providers/AppProviders";
 
-export default function SwapColumn({ onSellTokenChange }) {
+export default function SwapColumn({ onSellTokenChange, onBuyTokenChange }) {
 
   const onConnectWallet = () => {
     openConnectModal(); 
@@ -26,6 +27,7 @@ export default function SwapColumn({ onSellTokenChange }) {
         onSetPrimaryWallet={() => {}}      
         onLinkNewWallet={onConnectWallet}
         onFromTokenChange={(t) => onSellTokenChange?.(t)} //listening if SELL makes a change    
+        onToTokenChange={(t) => onBuyTokenChange?.(t)} //listening if BUY makes a change
         //disablePasteWalletAddressOption={false} 
       />
     </div>

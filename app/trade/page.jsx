@@ -48,6 +48,10 @@ export default function Trade() {
   };
 
   const [sell, setSell] = useState({ symbol: "ETH", address: null, chainId: 1 });
+  const [buy,  setBuy ] = useState({ symbol: "USDC", address: null, chainId: 1 });
+
+  const [activeTab, setActiveTab] = useState("SELL"); // "SELL" | "BUY"
+  const current = activeTab === "SELL" ? sell : buy;
 
   const handleSellTokenChange = (t) =>
   setSell({
@@ -55,6 +59,13 @@ export default function Trade() {
       address: t?.address || t?.token?.address || null,
       chainId: t?.chainId || t?.token?.chainId || 1,
     })
+
+  const handleBuyTokenChange = (t) =>
+  setBuy({
+    symbol: (t?.symbol || "USDC").toUpperCase(),
+    address: t?.address || t?.token?.address || null,
+    chainId: t?.chainId || t?.token?.chainId || 1,
+  });
 
   useEffect(() => {
     return () => {
@@ -136,10 +147,23 @@ export default function Trade() {
                     : undefined,
               }}
             >
-              {/* Actual chart content */}
-              <h2 className="text-white text-xl font-semibold mb-4">
-                {sell.symbol} Chart
-              </h2>
+              {/* TABS */}
+              <div className="mb-3 flex gap-2">
+                <button
+                  onClick={() => setActiveTab("SELL")}
+                  className={`px-3 py-1 rounded-lg border ${activeTab==="SELL"?"border-white/70 text-white":"border-white/20 text-white/70"}`}
+                >
+                  SELL
+                </button>
+                <button
+                  onClick={() => setActiveTab("BUY")}
+                  className={`px-3 py-1 rounded-lg border ${activeTab==="BUY"?"border-white/70 text-white":"border-white/20 text-white/70"}`}
+                >
+                  BUY
+                </button>
+              </div>
+
+              <h2 className="text-white text-xl font-semibold mb-4">{current.symbol}</h2>
 
               <div 
                 className="h-[500px] w-full relative border border-white/10"
@@ -159,11 +183,7 @@ export default function Trade() {
                 >
                   
                   <div className="flex items-center justify-center h-full text-gray-400">
-                    {/* <TokenChart token={selectedToken} /> */}
-                    {/* <DexScreenerChart tokenSymbol={selectedToken} /> */}
-                    {/* <TokenTVChart token={selectedToken} /> */}
-                    <ChartSmart symbol={sell.symbol} address={sell.address} chainId={sell.chainId} />
-
+                    <ChartSmart symbol={current.symbol} address={current.address} chainId={current.chainId} />
                   </div>
                 </div>
               </div>
@@ -184,6 +204,7 @@ export default function Trade() {
             <div className={isCollapsing ? "flex flex-col items-center w-full" : "md:flex md:justify-center lg:justify-start"}>
               <SwapColumn
                 onSellTokenChange={handleSellTokenChange}
+                onBuyTokenChange={handleBuyTokenChange}
               />
             </div>
 
