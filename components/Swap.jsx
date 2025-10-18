@@ -5,7 +5,7 @@ import { useAccount } from "wagmi";
 import { SwapWidget } from "@relayprotocol/relay-kit-ui";
 import { openConnectModal } from "../providers/AppProviders";
 
-export default function SwapColumn({ selectedToken, onSelectToken }) {
+export default function SwapColumn({ selectedToken, onSelectToken, onSellTokenChange }) {
   
   const tabs = useMemo(() => ["USDC", "DAI", "LINK"], []);
 
@@ -45,7 +45,8 @@ export default function SwapColumn({ selectedToken, onSelectToken }) {
         multiWalletSupportEnabled
         linkedWallets={linkedWallets}
         onSetPrimaryWallet={() => {}}      
-        onLinkNewWallet={onConnectWallet}     
+        onLinkNewWallet={onConnectWallet}
+        onFromTokenChange={(t) => onSellTokenChange?.(t)} //listening if SELL makes a change    
         //disablePasteWalletAddressOption={false} 
       />
     </div>

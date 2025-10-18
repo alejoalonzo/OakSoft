@@ -51,6 +51,9 @@ export default function Trade() {
     }
   };
 
+  const handleSellTokenChange = (t) =>
+  setSelectedToken(t?.symbol || t?.ticker || t?.name || "ETH");
+
   useEffect(() => {
     return () => {
       if (hideTimer.current) clearTimeout(hideTimer.current);
@@ -179,6 +182,7 @@ export default function Trade() {
               <SwapColumn
                 selectedToken={selectedToken}
                 onSelectToken={setSelectedToken}
+                onSellTokenChange={handleSellTokenChange}
               />
             </div>
 
