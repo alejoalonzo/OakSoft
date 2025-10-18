@@ -20,8 +20,13 @@ const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID;
 // keep a reference to Web3Modal
 let web3Modal = null;
 export const openConnectModal = () => {
-  if (web3Modal) web3Modal.open();
-  else console.warn("Web3Modal aún no está listo");
+  if (web3Modal) {
+    web3Modal.open();
+  } else {
+    console.warn("⚠️ Web3Modal is not ready. Please check your WalletConnect Project ID configuration.");
+    // Optionally show a user-friendly message
+    alert("Wallet connection is not available. Please check the console for configuration details.");
+  }
 };
 
 // ---------- external: Only QueryClient ----------
@@ -62,9 +67,9 @@ function ProvidersWithChains({ children }) {
   const wagmiConfig = useMemo(() => {
     return createConfig({
       chains: evmChains,
-      connectors: [
+      connectors: projectId && projectId !== "your_walletconnect_project_id_here" ? [
         walletConnect({
-          projectId: projectId || "dummy_project_id",
+          projectId,
           showQrModal: false, 
           metadata: {
             name: "OakSoft DeFi",
@@ -73,7 +78,7 @@ function ProvidersWithChains({ children }) {
             icons: [],
           },
         }),
-      ],
+      ] : [],
       transports: Object.fromEntries(evmChains.map((c) => [c.id, http()])),
     });
   }, [evmChains]);
@@ -81,23 +86,35 @@ function ProvidersWithChains({ children }) {
   // initialize Web3Modal if we have wagmi + chains
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!projectId) return;
+    if (!projectId) {
+      console.warn("⚠️ WalletConnect Project ID is missing. Please set NEXT_PUBLIC_WALLETCONNECT_ID in .ENV");
+      return;
+    }
+    if (projectId === "dummy_project_id" || projectId === "your_walletconnect_project_id_here") {
+      console.warn("⚠️ Please replace the dummy WalletConnect Project ID with a real one from https://cloud.walletconnect.com");
+      return;
+    }
     if (web3Modal) return;
 
-    web3Modal = createWeb3Modal({
-      wagmiConfig,
-      projectId,
-      chains: evmChains,
-      themeMode: "dark",
-      enableAnalytics: false,
-      enableOnramp: false,
-      metadata: {
-        name: "OakSoft DeFi",
-        description: "Decentralized Finance Platform",
-        url: "https://localhost:3000",
-        icons: [],
-      },
-    });
+    try {
+      web3Modal = createWeb3Modal({
+        wagmiConfig,
+        projectId,
+        chains: evmChains,
+        themeMode: "dark",
+        enableAnalytics: false,
+        enableOnramp: false,
+        metadata: {
+          name: "OakSoft DeFi",
+          description: "Decentralized Finance Platform",
+          url: "https://localhost:3000",
+          icons: [],
+        },
+      });
+      console.log("✅ Web3Modal initialized successfully");
+    } catch (error) {
+      console.error("❌ Failed to initialize Web3Modal:", error);
+    }
   }, [evmChains, wagmiConfig]);
 
   // Recommended: Relay → Wagmi → children
