@@ -66,6 +66,9 @@ const WidgetEventBridge = memo(function WidgetEventBridge({ onSellTokenChange, o
   return null;
 });
 
+// Get projectId from environment
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID;
+
 // Define widget config outside component to prevent recreation
 const WIDGET_CONFIG = {
   variant: "compact",
@@ -75,9 +78,13 @@ const WIDGET_CONFIG = {
   theme: {
     container: { border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" },
   },
-  // Configure wallet settings to prevent conflicts
+  // Clean wallet configuration - no conflicts since no Wagmi
   walletConfig: {
     autoConnect: false,
+    // Pass WalletConnect projectId
+    walletConnect: projectId ? {
+      projectId: projectId,
+    } : undefined,
   },
   // Add chains configuration
   chains: {
