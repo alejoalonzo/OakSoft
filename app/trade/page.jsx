@@ -21,6 +21,17 @@ function EyeOffIcon(props) {
     </svg>
   );
 }
+function shorten(addr) {
+  if (!addr) return "";
+  return addr.slice(0, 6) + "…" + addr.slice(-4);
+}
+function displayToken(t, fallback = "TOKEN") {
+  // Priority: SYMBOL > NAME (upper 1st word) > short address > fallback
+  if (t?.symbol) return t.symbol;
+  if (t?.name) return String(t.name).toUpperCase().split(" ")[0];
+  if (t?.address) return shorten(t.address);
+  return fallback;
+}
 
 export default function Trade() {
   // Timings
@@ -47,22 +58,24 @@ export default function Trade() {
     }
   };
 
-  const [sell, setSell] = useState({ symbol: "ETH", address: null, chainId: 1 });
-  const [buy,  setBuy ] = useState({ symbol: "USDC", address: null, chainId: 1 });
+  const [sell, setSell] = useState({ symbol: "ETH", name: "ETHEREUM", address: null, chainId: 1 });
+  const [buy,  setBuy ] = useState({ symbol: "USDC", name: "USD COIN", address: null, chainId: 1 });
 
   const [activeTab, setActiveTab] = useState("SELL"); // "SELL" | "BUY"
   const current = activeTab === "SELL" ? sell : buy;
 
-  const handleSellTokenChange = (t) =>
+const handleSellTokenChange = (t) =>
   setSell({
-      symbol: (t?.symbol || "ETH").toUpperCase(),
-      address: t?.address || t?.token?.address || null,
-      chainId: t?.chainId || t?.token?.chainId || 1,
-    })
+    symbol: (t?.symbol || null) ? String(t.symbol).toUpperCase() : null,
+    name: t?.name || null,
+    address: t?.address || t?.token?.address || null,
+    chainId: t?.chainId || t?.token?.chainId || 1,
+  });
 
-  const handleBuyTokenChange = (t) =>
+const handleBuyTokenChange = (t) =>
   setBuy({
-    symbol: (t?.symbol || "USDC").toUpperCase(),
+    symbol: (t?.symbol || null) ? String(t.symbol).toUpperCase() : null,
+    name: t?.name || null,
     address: t?.address || t?.token?.address || null,
     chainId: t?.chainId || t?.token?.chainId || 1,
   });
@@ -120,8 +133,6 @@ export default function Trade() {
             className={[
               "overflow-hidden transition-[width,height] duration-[420ms]",
               "ease-[cubic-bezier(0.33,0,0.2,1)]",
-              // En móvil: cuando se oculta, w-0 y h-0 para no ocupar espacio
-              // En desktop: cuando se oculta, solo w-0 (mantiene comportamiento original)
               isCollapsing ? "w-0 h-0 lg:h-auto lg:w-0" : "w-full lg:w-[60%]",
             ].join(" ")}
             aria-hidden={isHidden}
@@ -157,7 +168,8 @@ export default function Trade() {
                       : "text-white/60 hover:text-white/80 pb-1"
                   }`}
                 >
-                  {sell.symbol}
+                  {displayToken(sell, "SELL")}
+
                 </button>
                 <span className="text-white/40 text-2xl font-semibold self-end pb-1 mx-2">/</span>
                 <button
@@ -168,7 +180,7 @@ export default function Trade() {
                       : "text-white/60 hover:text-white/80 pb-1"
                   }`}
                 >
-                  {buy.symbol}
+                  {displayToken(buy, "BUY")}
                 </button>
               </div>
 
@@ -190,7 +202,11 @@ export default function Trade() {
                 >
                   
                   <div className="flex items-center justify-center h-full text-gray-400">
-                    <ChartSmart symbol={current.symbol} address={current.address} chainId={current.chainId} />
+                    <ChartSmart   
+                      symbol={current.symbol}
+                      name={current.name}
+                      address={current.address}
+                      chainId={current.chainId} />
                   </div>
                 </div>
               </div>
@@ -212,7 +228,7 @@ export default function Trade() {
               <h2 className="text-white text-2xl font-semibold">SWAP</h2>
             </div>
 
-            {/* Componente Swap directamente */}
+            {/* component SwapColumn */}
             <div className={isCollapsing ? "flex flex-col items-center w-full" : "md:flex md:justify-center lg:justify-start"}>
               <SwapColumn
                 onSellTokenChange={handleSellTokenChange}
@@ -220,7 +236,7 @@ export default function Trade() {
               />
             </div>
 
-            {/* Botón Hide/Expand debajo del componente Swap */}
+            {/* TOGGLE BUTTON */}
             <div className={["mt-6 flex", isCollapsing ? "justify-center" : "justify-center lg:justify-start"].join(" ")}>
               <button
                 onClick={onToggleChart}

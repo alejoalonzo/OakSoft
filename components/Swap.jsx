@@ -15,15 +15,19 @@ function WidgetEventBridge({ onSellTokenChange, onBuyTokenChange }) {
     const fetchAndEmit = async (kind, { chainId, tokenAddress }) => {
       try {
         const tok = await getToken(chainId, tokenAddress);
+        const symbol = tok?.symbol ? String(tok.symbol).toUpperCase() : null;
+        const name = tok?.name || null;
+
         console.log(`[LI.FI ${kind}]`, {
           chainId,
           tokenAddress,
-          symbol: tok?.symbol,
-          name: tok?.name,
+          symbol,
+          name,
         });
 
         const payload = {
-          symbol: tok?.symbol || null,
+          symbol,                            // normalized
+          name,                              // <- NEW
           address: tok?.address || tokenAddress || null,
           chainId: tok?.chainId || chainId || 1,
         };
@@ -38,13 +42,15 @@ function WidgetEventBridge({ onSellTokenChange, onBuyTokenChange }) {
         });
 
         const payload = {
-          symbol: null, // dont stop if failed, Chain+Address may be useful
+          symbol: null,
+          name: null,                        // <- NEW
           address: tokenAddress || null,
           chainId: chainId || 1,
         };
         (kind === "SOURCE" ? onSellTokenChange : onBuyTokenChange)?.(payload);
       }
     };
+
 
     const onSource = (p) => fetchAndEmit("SOURCE", p);
     const onDest = (p) => fetchAndEmit("DEST", p);
