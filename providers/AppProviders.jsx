@@ -20,15 +20,10 @@ if (typeof window !== "undefined") {
   console.log("- Environment:", process.env.NODE_ENV);
 }
 
-// Keep a reference to Web3Modal
+// Keep a reference to Web3Modal - but don't use it if LiFi is handling wallets
 let web3Modal = null;
 export const openConnectModal = () => {
-  if (web3Modal) {
-    web3Modal.open();
-  } else {
-    console.warn("⚠️ Web3Modal is not ready. Configure NEXT_PUBLIC_WALLETCONNECT_ID");
-    alert("Wallet connection is not available. Check console for details.");
-  }
+  console.log("⚠️ Using LiFi widget's internal wallet connection instead");
 };
 
 // ---------- external: Only QueryClient ----------
@@ -69,59 +64,38 @@ function ProvidersWithWagmi({ children }) {
 
   const evmChains = [mainnet, base, arbitrum, optimism];
 
-  // Wagmi config
+  // Wagmi config with basic connectors for LiFi compatibility
   const wagmiConfig = useMemo(() => {
+    const connectors = [];
+    
+    // Add WalletConnect only if we have project ID
+    if (projectId && projectId !== "your_walletconnect_project_id_here") {
+      connectors.push(
+        walletConnect({
+          projectId,
+          showQrModal: false, // Let LiFi handle the UI
+          metadata: {
+            name: "OakSoft DeFi",
+            description: "Decentralized Finance Platform",
+            url: typeof window !== "undefined" ? window.location.origin : "https://localhost:3000",
+            icons: [],
+          },
+        })
+      );
+    }
+
     return createConfig({
       chains: evmChains,
-      connectors:
-        projectId && projectId !== "your_walletconnect_project_id_here"
-          ? [
-              walletConnect({
-                projectId,
-                showQrModal: false,
-                metadata: {
-                  name: "OakSoft DeFi",
-                  description: "Decentralized Finance Platform",
-                  url: "https://localhost:3000",
-                  icons: [],
-                },
-              }),
-            ]
-          : [],
+      connectors,
       transports: Object.fromEntries(evmChains.map((c) => [c.id, http()])),
       ssr: true,
     });
   }, [projectId]);
 
-  // Init Web3Modal
+  // Skip Web3Modal initialization - LiFi will handle wallet connections
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!projectId) {
-      console.warn("⚠️ Set NEXT_PUBLIC_WALLETCONNECT_ID in .env.local");
-      return;
-    }
-    if (web3Modal) return;
-
-    try {
-      web3Modal = createWeb3Modal({
-        wagmiConfig,
-        projectId,
-        chains: evmChains,
-        themeMode: "dark",
-        enableAnalytics: false,
-        enableOnramp: false,
-        metadata: {
-          name: "OakSoft DeFi",
-          description: "Decentralized Finance Platform",
-          url: "https://localhost:3000",
-          icons: [],
-        },
-      });
-      console.log("✅ Web3Modal initialized");
-    } catch (error) {
-      console.error("❌ Failed to initialize Web3Modal:", error);
-    }
-  }, [wagmiConfig]);
+    console.log("✅ AppProviders initialized - letting LiFi handle wallet connections");
+  }, []);
 
   return (
     <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
