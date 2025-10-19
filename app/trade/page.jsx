@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import SwapColumn from "../../components/Swap";
 import ChartSmart from "../../components/ChartSmart";
 
@@ -64,21 +64,23 @@ export default function Trade() {
   const [activeTab, setActiveTab] = useState("SELL"); // "SELL" | "BUY"
   const current = activeTab === "SELL" ? sell : buy;
 
-const handleSellTokenChange = (t) =>
+const handleSellTokenChange = useCallback((t) => {
   setSell({
     symbol: (t?.symbol || null) ? String(t.symbol).toUpperCase() : null,
     name: t?.name || null,
     address: t?.address || t?.token?.address || null,
     chainId: t?.chainId || t?.token?.chainId || 1,
   });
+}, []);
 
-const handleBuyTokenChange = (t) =>
+const handleBuyTokenChange = useCallback((t) => {
   setBuy({
     symbol: (t?.symbol || null) ? String(t.symbol).toUpperCase() : null,
     name: t?.name || null,
     address: t?.address || t?.token?.address || null,
     chainId: t?.chainId || t?.token?.chainId || 1,
   });
+}, []);
 
   useEffect(() => {
     return () => {

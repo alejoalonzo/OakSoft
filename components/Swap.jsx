@@ -4,11 +4,11 @@
 import { LiFiWidget } from "@lifi/widget";
 import { useWidgetEvents, WidgetEvent } from "@lifi/widget";
 import { getToken } from "@lifi/sdk"; // <- to get Symbol, Name, etc.
-import { useEffect } from "react";
+import { useEffect, useMemo, useCallback, memo } from "react";
 import { openConnectModal } from "../providers/AppProviders";
 
 
-function WidgetEventBridge({ onSellTokenChange, onBuyTokenChange }) {
+const WidgetEventBridge = memo(function WidgetEventBridge({ onSellTokenChange, onBuyTokenChange }) {
   const widgetEvents = useWidgetEvents();
 
   useEffect(() => {
@@ -64,10 +64,16 @@ function WidgetEventBridge({ onSellTokenChange, onBuyTokenChange }) {
   }, [widgetEvents, onSellTokenChange, onBuyTokenChange]);
 
   return null;
-}
+});
 
 export default function SwapColumn({ onSellTokenChange, onBuyTokenChange }) {
-  const widgetConfig = {
+  // Memoize the onConnect callback to prevent recreation
+  const memoizedOnConnect = useCallback(() => {
+    openConnectModal();
+  }, []);
+
+  // Memoize the widget configuration to prevent infinite re-renders
+  const widgetConfig = useMemo(() => ({
     variant: "compact",
     subvariant: "split",
     subvariantOptions: { split: "swap" },
@@ -75,9 +81,8 @@ export default function SwapColumn({ onSellTokenChange, onBuyTokenChange }) {
     theme: {
       container: { border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" },
     },
-    walletConfig: { onConnect: openConnectModal },
-
-  };
+    walletConfig: { onConnect: memoizedOnConnect },
+  }), [memoizedOnConnect]);
 
   return (
     <div className="w-fit bg-gray-800 rounded-xl border border-white/10 p-4 space-y-3">
