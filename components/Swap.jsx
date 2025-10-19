@@ -1,59 +1,80 @@
 // components/Swap.jsx
 "use client";
 
-import { useAccount } from "wagmi"; 
-import { SwapWidget } from "@relayprotocol/relay-kit-ui";
+import { useEffect } from "react";
+import { LiFiWidget, useWidgetEvents, WidgetEvent } from "@lifi/widget";
 import { openConnectModal } from "../providers/AppProviders";
 
+/**
+ * We replace Relay's <SwapWidget/> with LI.FI's <LiFiWidget/>.
+ * We keep the same props so the rest of your app (Trade + ChartSmart) keeps working.
+ *
+ * onSellTokenChange / onBuyTokenChange receive { symbol?, address?, chainId? }.
+ * LI.FI events give us chainId + tokenAddress; symbol may be unknown, so we pass null.
+ * Your ChartSmart already falls back to DEXTools when it gets {address+chainId} without symbol.
+ */
 export default function SwapColumn({ onSellTokenChange, onBuyTokenChange }) {
+  const widgetEvents = useWidgetEvents();
 
-  const onConnectWallet = () => {
-    try {
-      openConnectModal(); 
-    } catch (error) {
-      console.error("Error opening connect modal:", error);
-    }
-  };
+  // Subscribe to token/chain selection events and mirror them to parent
+  useEffect(() => {
+    // Source (SELL) updated
+    const onSource = ({ chainId, tokenAddress }) => {
+      onSellTokenChange?.({
+        symbol: null,            // unknown here; ChartSmart can use address+chainId
+        address: tokenAddress || null,
+        chainId: chainId || 1,
+      });
+    };
+    // Destination (BUY) updated
+    const onDest = ({ chainId, tokenAddress }) => {
+      onBuyTokenChange?.({
+        symbol: null,
+        address: tokenAddress || null,
+        chainId: chainId || 1,
+      });
+    };
 
-  //multi wallets
-  const { address } = useAccount();
-  const linkedWallets = address ? [{ vm: "evm", address }] : [];
+    widgetEvents.on(WidgetEvent.SourceChainTokenSelected, onSource);
+    widgetEvents.on(WidgetEvent.DestinationChainTokenSelected, onDest);
 
-  const handleSwapError = (error) => {
-    console.warn("SwapWidget error:", error);
-    
-    // Check for common 400 errors
-    if (error?.response?.status === 400) {
-      console.error("❌ 400 Bad Request Error:");
-      console.error("- Request:", error?.config?.url);
-      console.error("- Data:", error?.config?.data);
-      console.error("- Message:", error?.message);
-      
-      // Common causes of 400 errors in DeFi
-      if (error?.config?.url?.includes('relay')) {
-        console.error("🔧 This might be a RelayKit configuration issue:");
-        console.error("1. Check if WalletConnect Project ID is properly set");
-        console.error("2. Ensure proper chain configuration");
-        console.error("3. Verify wallet connection status");
-      }
-    }
+    return () => widgetEvents.all.clear();
+  }, [widgetEvents, onSellTokenChange, onBuyTokenChange]);
+
+  // Minimal widget config to fit your right column
+  const widgetConfig = {
+    // UI/Variant
+    variant: "compact",                 // fits well in a sidebar/card
+    subvariant: "split",
+    subvariantOptions: { split: "swap" }, // show only Swap UI (no tabs)
+    appearance: "dark",
+    theme: {
+      container: {
+        border: "1px solid rgba(255,255,255,0.1)",
+        borderRadius: "12px",
+      },
+    },
+
+    // Initial values (optional)
+    // fromChain: 1,  // ETH Mainnet
+    // toChain: 1,
+
+    // Wallet behavior: reuse your Wagmi + Web3Modal, but define a handler for "Connect wallet" button
+    walletConfig: {
+      onConnect: openConnectModal, // opens your external wallet modal
+    },
+
+    // If later you want to restrict/allow chains/tokens/bridges:
+    // chains: { allow: [1, 8453, 42161, 10] },
+    // tokens: { /* allow/deny/include/featured */ },
+    // exchanges: { allow: ["uniswapv3", "sushiswap"] },
+    // bridges: { allow: ["stargate", "hop"] },
   };
 
   return (
     <div className="w-fit bg-gray-800 rounded-xl border border-white/10 p-4 space-y-3">
-      {/* SwapWidget multichain: without chain lock or fixed tokens */}
-      <SwapWidget
-        supportedWalletVMs={["evm"]}
-        onConnectWallet={onConnectWallet}
-        onError={handleSwapError}
-        multiWalletSupportEnabled
-        linkedWallets={linkedWallets}
-        onSetPrimaryWallet={() => {}}      
-        onLinkNewWallet={onConnectWallet}
-        onFromTokenChange={(t) => onSellTokenChange?.(t)} //listening if SELL makes a change    
-        onToTokenChange={(t) => onBuyTokenChange?.(t)} //listening if BUY makes a change
-        //disablePasteWalletAddressOption={false} 
-      />
+      {/* LI.FI Widget (client-side) */}
+      <LiFiWidget integrator="OakSoft DeFi" config={widgetConfig} />
     </div>
   );
 }
