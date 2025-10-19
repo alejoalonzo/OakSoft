@@ -1,79 +1,87 @@
 // components/Swap.jsx
 "use client";
 
+import { LiFiWidget } from "@lifi/widget";
+import { useWidgetEvents, WidgetEvent } from "@lifi/widget";
+import { getToken } from "@lifi/sdk"; // <- to get Symbol, Name, etc.
 import { useEffect } from "react";
-import { LiFiWidget, useWidgetEvents, WidgetEvent } from "@lifi/widget";
 import { openConnectModal } from "../providers/AppProviders";
 
-/**
- * We replace Relay's <SwapWidget/> with LI.FI's <LiFiWidget/>.
- * We keep the same props so the rest of your app (Trade + ChartSmart) keeps working.
- *
- * onSellTokenChange / onBuyTokenChange receive { symbol?, address?, chainId? }.
- * LI.FI events give us chainId + tokenAddress; symbol may be unknown, so we pass null.
- * Your ChartSmart already falls back to DEXTools when it gets {address+chainId} without symbol.
- */
-export default function SwapColumn({ onSellTokenChange, onBuyTokenChange }) {
+
+function WidgetEventBridge({ onSellTokenChange, onBuyTokenChange }) {
   const widgetEvents = useWidgetEvents();
 
-  // Subscribe to token/chain selection events and mirror them to parent
   useEffect(() => {
-    // Source (SELL) updated
-    const onSource = ({ chainId, tokenAddress }) => {
-      onSellTokenChange?.({
-        symbol: null,            // unknown here; ChartSmart can use address+chainId
-        address: tokenAddress || null,
-        chainId: chainId || 1,
-      });
-    };
-    // Destination (BUY) updated
-    const onDest = ({ chainId, tokenAddress }) => {
-      onBuyTokenChange?.({
-        symbol: null,
-        address: tokenAddress || null,
-        chainId: chainId || 1,
-      });
+    const fetchAndEmit = async (kind, { chainId, tokenAddress }) => {
+      try {
+        const tok = await getToken(chainId, tokenAddress);
+        console.log(`[LI.FI ${kind}]`, {
+          chainId,
+          tokenAddress,
+          symbol: tok?.symbol,
+          name: tok?.name,
+        });
+
+        const payload = {
+          symbol: tok?.symbol || null,
+          address: tok?.address || tokenAddress || null,
+          chainId: tok?.chainId || chainId || 1,
+        };
+
+        if (kind === "SOURCE") onSellTokenChange?.(payload);
+        else onBuyTokenChange?.(payload);
+      } catch (e) {
+        console.warn(`[LI.FI ${kind}] token lookup failed`, {
+          chainId,
+          tokenAddress,
+          error: e?.message,
+        });
+
+        const payload = {
+          symbol: null, // dont stop if failed, Chain+Address may be useful
+          address: tokenAddress || null,
+          chainId: chainId || 1,
+        };
+        (kind === "SOURCE" ? onSellTokenChange : onBuyTokenChange)?.(payload);
+      }
     };
 
+    const onSource = (p) => fetchAndEmit("SOURCE", p);
+    const onDest = (p) => fetchAndEmit("DEST", p);
+
+    // === Events ===
     widgetEvents.on(WidgetEvent.SourceChainTokenSelected, onSource);
     widgetEvents.on(WidgetEvent.DestinationChainTokenSelected, onDest);
 
+    // Cleanup
     return () => widgetEvents.all.clear();
   }, [widgetEvents, onSellTokenChange, onBuyTokenChange]);
 
-  // Minimal widget config to fit your right column
+  return null;
+}
+
+export default function SwapColumn({ onSellTokenChange, onBuyTokenChange }) {
   const widgetConfig = {
-    // UI/Variant
-    variant: "compact",                 // fits well in a sidebar/card
+    variant: "compact",
     subvariant: "split",
-    subvariantOptions: { split: "swap" }, // show only Swap UI (no tabs)
+    subvariantOptions: { split: "swap" },
     appearance: "dark",
     theme: {
-      container: {
-        border: "1px solid rgba(255,255,255,0.1)",
-        borderRadius: "12px",
-      },
+      container: { border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" },
     },
+    walletConfig: { onConnect: openConnectModal },
 
-    // Initial values (optional)
-    // fromChain: 1,  // ETH Mainnet
-    // toChain: 1,
-
-    // Wallet behavior: reuse your Wagmi + Web3Modal, but define a handler for "Connect wallet" button
-    walletConfig: {
-      onConnect: openConnectModal, // opens your external wallet modal
-    },
-
-    // If later you want to restrict/allow chains/tokens/bridges:
-    // chains: { allow: [1, 8453, 42161, 10] },
-    // tokens: { /* allow/deny/include/featured */ },
-    // exchanges: { allow: ["uniswapv3", "sushiswap"] },
-    // bridges: { allow: ["stargate", "hop"] },
   };
 
   return (
     <div className="w-fit bg-gray-800 rounded-xl border border-white/10 p-4 space-y-3">
-      {/* LI.FI Widget (client-side) */}
+      {/* Event Listener */}
+      <WidgetEventBridge
+        onSellTokenChange={onSellTokenChange}
+        onBuyTokenChange={onBuyTokenChange}
+      />
+
+      {/* Widget LI.FI */}
       <LiFiWidget integrator="OakSoft DeFi" config={widgetConfig} />
     </div>
   );

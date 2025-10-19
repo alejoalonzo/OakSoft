@@ -66,8 +66,7 @@ export default function AppProviders({ children }) {
 
 // ---------- Wagmi only (Relay removed) ----------
 function ProvidersWithWagmi({ children }) {
-  // Define the EVM chains you want to support in your dApp and in the LI.FI widget
-  // Tip: keep Wagmi chains in sync with the widget (allow/deny) for smooth chain switching
+
   const evmChains = [mainnet, base, arbitrum, optimism];
 
   // Wagmi config
