@@ -226,9 +226,9 @@ const handleBuyTokenChange = useCallback((t) => {
             style={{ transitionDuration: `${WIDTH_MS}ms` }}
           >
             {/* SWAP TITLE */}
-            <div className={["mb-6", isCollapsing ? "text-center" : "text-center lg:text-left"].join(" ")}>
+            {/* <div className={["mb-6", isCollapsing ? "text-center" : "text-center lg:text-left"].join(" ")}>
               <h2 className="text-white text-2xl font-semibold">SWAP</h2>
-            </div>
+            </div> */}
 
             {/* component SwapColumn */}
             <div className={isCollapsing ? "flex flex-col items-center w-full" : "md:flex md:justify-center lg:justify-start"}>
