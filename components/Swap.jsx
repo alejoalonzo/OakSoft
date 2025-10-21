@@ -76,7 +76,12 @@ const WIDGET_CONFIG = {
   subvariantOptions: { split: "swap" },
   appearance: "dark",
   theme: {
-    container: { border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" },
+    container: { 
+      border: "none", 
+      borderRadius: "12px",
+      background: "transparent",
+      padding: "0px"
+    },
   },
   // Clean wallet configuration - no conflicts since no Wagmi
   walletConfig: {
@@ -128,7 +133,7 @@ const LiFiWidgetWrapper = memo(function LiFiWidgetWrapper() {
 export default function SwapColumn({ onSellTokenChange, onBuyTokenChange }) {
 
   return (
-    <div className="w-fit bg-gray-800 rounded-xl border border-white/10 p-4 space-y-3">
+    <div className="bg-gray-800 rounded-xl border border-white/10 overflow-hidden">
       {/* Event Listener */}
       <WidgetEventBridge
         onSellTokenChange={onSellTokenChange}
