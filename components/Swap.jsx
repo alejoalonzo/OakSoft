@@ -85,74 +85,7 @@ const WIDGET_CONFIG = {
     walletConnect: projectId ? {
       projectId: projectId,
     } : undefined,
-  },
-  // Add chains configuration - ALL LiFi supported chains
-  chains: {
-    allow: [
-      // Major chains
-      1,          // Ethereum
-      56,         // BSC (Binance Smart Chain)
-      137,        // Polygon
-      42161,      // Arbitrum
-      10,         // Optimism
-      43114,      // Avalanche
-      8453,       // Base
-      250,        // Fantom
-      100,        // Gnosis
-      42220,      // Celo
-      25,         // Cronos
-      
-      // Layer 2s and scaling solutions
-      324,        // zkSync
-      1101,       // Polygon zkEVM
-      534352,     // Scroll
-      59144,      // Linea
-      81457,      // Blast
-      5000,       // Mantle
-      204,        // opBNB
-      1088,       // Metis
-      288,        // Boba
-      34443,      // Mode
-      42793,      // Etherlink
-      252,        // Fraxtal
-      480,        // World Chain
-      60808,      // BOB
-      167000,     // Taiko
-      
-      // Emerging and specialized chains
-      1285,       // Moonriver
-      1284,       // Moonbeam
-      122,        // FUSE
-      1135,       // Lisk
-      130,        // Unichain
-      1313161554, // Aurora
-      1329,       // Sei
-      1337,       // Hyperliquid
-      13371,      // Immutable zkEVM
-      14,         // Flare
-      146,        // Sonic
-      1480,       // Vana
-      1625,       // Gravity
-      1868,       // Soneium
-      1923,       // Swellchain
-      2020,       // Ronin
-      21000000,   // Corn
-      232,        // Lens
-      2741,       // Abstract
-      30,         // Rootstock
-      33139,      // Apechain
-      50,         // XDC
-      50104,      // Sophon
-      55244,      // Superposition
-      57073,      // Ink
-      747474,     // Katana
-      80094,      // Berachain
-      8217,       // Kaia
-      9745,       // Plasma
-      98866,      // Plume
-      999,        // HyperEVM
-    ],
-  },
+  }
 };
 
 // Create a dynamic import to prevent SSR issues

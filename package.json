@@ -9,19 +9,23 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@bigmi/client": "^0.6.0",
+    "@bigmi/core": "^0.6.0",
     "@bigmi/react": "^0.6.0",
     "@lifi/sdk": "^3.12.14",
     "@lifi/widget": "^3.33.1",
     "@mysten/dapp-kit": "^0.19.5",
+    "@mysten/sui": "^1.43.0",
     "@relayprotocol/relay-kit-hooks": "^2.0.6",
     "@relayprotocol/relay-kit-ui": "^5.0.3",
+    "@solana/wallet-adapter-base": "^0.9.27",
     "@solana/wallet-adapter-react": "^0.15.39",
     "@tanstack/react-query": "^5.90.5",
     "@web3modal/wagmi": "^5.1.11",
     "next": "15.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "viem": "^2.38.0",
+    "viem": "^2.38.3",
     "wagmi": "^2.18.1"
   },
   "devDependencies": {
