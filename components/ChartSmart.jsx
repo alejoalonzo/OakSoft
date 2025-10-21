@@ -28,6 +28,11 @@ const SLUG = {
 const TV_SYMBOL_MAP = {
   WETH: "ETH",
   WBTC: "BTC",
+  WSOL: "SOL",
+  WMATIC: "MATIC",
+  WBNB: "BNB",
+  WAVAX: "AVAX",
+  WFTM: "FTM",
   USDC: "USDC",
   USDT: "USDT",
   DAI: "DAI",
@@ -99,7 +104,7 @@ export default function ChartSmart({ symbol, name, address, chainId }) {
 
     // Debounce to avoid re-mounting TV multiple times when swaps fire rapidly
     const DEBOUNCE_MS = 450;
-    const ATTEMPT_TIMEOUT_MS = 1600;
+    const ATTEMPT_TIMEOUT_MS = 2000;
 
     let cancelled = false;
 
