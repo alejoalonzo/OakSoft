@@ -79,7 +79,7 @@ export default function Navigation() {
             <button
               type="button"
               onClick={toggleMenu}
-              className="hidden md:inline-flex flex-col justify-center items-end focus:outline-none cursor-pointer"
+              className="hidden md:inline-flex flex-col justify-center items-end focus:outline-none cursor-pointer p-3 hover:bg-gray-800/20 rounded-lg transition-colors"
               style={{
                 marginTop: "34px",
                 marginRight: "43px",
@@ -135,7 +135,7 @@ export default function Navigation() {
             <button
               type="button"
               onClick={toggleMenu}
-              className="md:hidden inline-flex flex-col justify-center items-end focus:outline-none cursor-pointer"
+              className="md:hidden inline-flex flex-col justify-center items-end focus:outline-none cursor-pointer p-3 hover:bg-gray-800/20 rounded-lg transition-colors"
               style={{
                 marginTop: "22px",
                 marginRight: "24px",
@@ -188,7 +188,7 @@ export default function Navigation() {
             </button>
 
             {isMenuOpen && (
-              <div className="absolute top-16 right-0 bg-white dark:bg-gray-900 shadow-lg z-50">
+              <div className="absolute top-16 right-0 bg-transparent z-50">
                 <div className="py-4">
                   <Link
                     href="/"

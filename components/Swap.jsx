@@ -1,12 +1,18 @@
 // components/Swap.jsx
 "use client";
 
-import { LiFiWidget } from "@lifi/widget";
+import { LiFiWidget  } from "@lifi/widget";
 import { useWidgetEvents, WidgetEvent } from "@lifi/widget";
 import { getToken } from "@lifi/sdk"; // <- to get Symbol, Name, etc.
 import { useEffect, useMemo, useCallback, memo, useState } from "react";
 import dynamic from "next/dynamic";
 
+
+export const WidgetPage = () => {
+  return (
+    <LiFiWidget integrator="Your dApp/company name" config={widgetConfig} />
+  );
+};
 
 const WidgetEventBridge = memo(function WidgetEventBridge({ onSellTokenChange, onBuyTokenChange }) {
   const widgetEvents = useWidgetEvents();
@@ -75,6 +81,7 @@ const WIDGET_CONFIG = {
   subvariant: "split", 
   subvariantOptions: { split: "swap" },
   appearance: "dark",
+  hiddenUI: ['poweredBy'], // This hides the "Powered by LI.FI" branding
   theme: {
     container: { 
       border: "none", 
