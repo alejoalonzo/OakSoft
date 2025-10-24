@@ -212,7 +212,7 @@ export default function Navigation() {
                   <Link
                     href="/trade"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`block transition-colors uppercase mr-10 md:mr-36 cursor-pointer ${
+                    className={`block transition-colors uppercase mb-4 mr-10 md:mr-36 cursor-pointer ${
                       isActive("/trade")
                         ? "text-primary-500 dark:text-accent"
                         : "text-white hover:text-primary-500 dark:hover:text-accent"
@@ -227,6 +227,25 @@ export default function Navigation() {
                     }}
                   >
                     Trade
+                  </Link>
+                  <Link
+                    href="/loans"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`block transition-colors uppercase mr-10 md:mr-36 cursor-pointer ${
+                      isActive("/loans")
+                        ? "text-primary-500 dark:text-accent"
+                        : "text-white hover:text-primary-500 dark:hover:text-accent"
+                    }`}
+                    style={{
+                      fontFamily: "var(--font-abhaya-libre), serif",
+                      fontWeight: 800,
+                      fontSize: "18px",
+                      lineHeight: "18px",
+                      letterSpacing: "2.7px",
+                      textAlign: "right",
+                    }}
+                  >
+                    Loans
                   </Link>
                 </div>
               </div>
