@@ -91,12 +91,38 @@ const WIDGET_CONFIG = {
     palette: {
       primary: { main: '#95E100' },
       secondary: { main: '#FFFFFF' },
+      text: {
+        primary: '#FFFFFF',
+        secondary: '#CCCCCC',
+      },
+      background: {
+        paper: '#1F2937',
+        default: '#111827',
+      },
+    },
+    shape: {
+      borderRadius: 12,
+      borderRadiusSecondary: 8,
     },
     container: { 
       border: "none", 
       borderRadius: "12px",
       background: "transparent",
       padding: "0px"
+    },
+    components: {
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            backgroundColor: '#95E100',
+            color: '#1F2937',
+            fontWeight: 'bold',
+            '&:hover': {
+              backgroundColor: '#7AB800',
+            },
+          },
+        },
+      },
     },
   },
   // Clean wallet configuration - no conflicts since no Wagmi

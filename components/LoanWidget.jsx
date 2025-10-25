@@ -7,23 +7,23 @@ export default function LoanWidget() {
   const [selectedDuration, setSelectedDuration] = useState("long");
   
   return (
-    <div className="bg-gray-800 rounded-xl border border-white/10 p-8">
-      <div className="space-y-6">
-        <h3 className="text-xl font-semibold text-white">Loan Calculator</h3>
+    <div className="bg-gradient-to-br from-gray-800 to-gray-850 rounded-2xl border border-white/20 p-10 shadow-2xl backdrop-blur-sm">
+      <div className="space-y-8">
+        <h3 className="text-2xl font-bold text-white tracking-tight">Loan Calculator</h3>
           
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">
                 Collateral
               </label>
-              <div className="flex bg-gray-700 border border-gray-600 rounded-lg overflow-hidden focus-within:border-blue-500 transition-colors">
+              <div className="flex bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-hidden focus-within:border-[#95E100] focus-within:shadow-lg focus-within:shadow-[#95E100]/20 transition-all duration-300 hover:border-gray-500">
                 <input
                   type="number"
                   placeholder="0.00"
-                  className="flex-1 px-4 py-3 bg-transparent text-white placeholder-gray-400 focus:outline-none"
+                  className="flex-1 px-5 py-4 bg-transparent text-white placeholder-gray-400 focus:outline-none text-lg font-medium"
                 />
-                <div className="border-l border-gray-600"></div>
-                <select className="px-4 py-3 bg-transparent text-white focus:outline-none cursor-pointer min-w-[120px]">
+                <div className="border-l border-gray-600/60"></div>
+                <select className="px-5 py-4 bg-transparent text-white focus:outline-none cursor-pointer min-w-[130px] font-medium">
                   <option value="BTC" className="bg-gray-700">BTC</option>
                   <option value="ETH" className="bg-gray-700">ETH</option>
                   <option value="USDT" className="bg-gray-700">USDT</option>
@@ -33,40 +33,40 @@ export default function LoanWidget() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">
                 Loan
               </label>
-              <div className="flex bg-gray-700 border border-gray-600 rounded-lg overflow-hidden">
-                <div className="flex-1 px-4 py-3 bg-transparent text-white font-semibold text-lg flex items-center">
+              <div className="flex bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-hidden">
+                <div className="flex-1 px-5 py-4 bg-transparent text-white font-bold text-xl flex items-center">
                   $2,450.00
                 </div>
-                <div className="border-l border-gray-600"></div>
-                <select className="px-4 py-3 bg-transparent text-white focus:outline-none cursor-pointer min-w-[120px]">
+                <div className="border-l border-gray-600/60"></div>
+                <select className="px-5 py-4 bg-transparent text-white focus:outline-none cursor-pointer min-w-[130px] font-medium">
                   <option value="USDT" className="bg-gray-700">USDT</option>
                   <option value="USDC" className="bg-gray-700">USDC</option>
                   <option value="DAI" className="bg-gray-700">DAI</option>
                   <option value="BUSD" className="bg-gray-700">BUSD</option>
                 </select>
               </div>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-400 mt-2 ml-1">
                 Amount calculated based on LTV ratio and current market prices
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">
                 LTV Ratio (Loan-to-Value)
               </label>
-              <div className="bg-gray-700 rounded-lg p-2 border border-gray-600">
-                <div className="grid grid-cols-4 gap-2">
+              <div className="bg-gray-700/30 rounded-xl p-4 border border-gray-600/40">
+                <div className="grid grid-cols-4 gap-3">
                   {["50", "65", "80", "90"].map((ltv) => (
                     <button
                       key={ltv}
                       onClick={() => setSelectedLTV(ltv)}
-                      className={`py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ${
+                      className={`py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-300 transform hover:scale-105 ${
                         selectedLTV === ltv
-                          ? "bg-blue-600 text-white shadow-md"
-                          : "bg-gray-600 text-gray-300 hover:bg-gray-500 hover:text-white"
+                          ? "bg-[#95E100] text-gray-900"
+                          : "bg-gray-600/60 text-gray-300 hover:bg-[#95E100]/80 hover:text-gray-900"
                       }`}
                     >
                       {ltv}%
@@ -77,26 +77,26 @@ export default function LoanWidget() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">
                 Choose APR
               </label>
-              <div className="bg-gray-700 rounded-lg p-2 border border-gray-600">
-                <div className="grid grid-cols-2 gap-2">
+              <div className="bg-gray-700/30 rounded-xl p-4 border border-gray-600/40">
+                <div className="grid grid-cols-2 gap-4">
                   <button
                     onClick={() => setSelectedDuration("long")}
-                    className={`p-4 rounded-md font-medium text-sm transition-all duration-200 text-left ${
+                    className={`p-5 rounded-xl font-medium text-sm transition-all duration-300 text-left transform hover:scale-105 ${
                       selectedDuration === "long"
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "bg-gray-600 text-gray-300 hover:bg-gray-500 hover:text-white"
+                        ? "border-2 border-[#95E100] bg-gray-600/40 text-white"
+                        : "border-2 border-gray-500/60 bg-gray-600/30 text-gray-300 hover:border-[#95E100]/60 hover:text-white"
                     }`}
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <div className="font-semibold">Long Term</div>
+                        <div className="font-bold mb-1">Long Term</div>
                         <div className="text-xs opacity-80">Unlimited time</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold">APR</div>
+                        <div className="font-bold mb-1">APR</div>
                         <div className="text-xs">(...)</div>
                       </div>
                     </div>
@@ -104,19 +104,19 @@ export default function LoanWidget() {
                   
                   <button
                     onClick={() => setSelectedDuration("short")}
-                    className={`p-4 rounded-md font-medium text-sm transition-all duration-200 text-left ${
+                    className={`p-5 rounded-xl font-medium text-sm transition-all duration-300 text-left transform hover:scale-105 ${
                       selectedDuration === "short"
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "bg-gray-600 text-gray-300 hover:bg-gray-500 hover:text-white"
+                        ? "border-2 border-[#95E100] bg-gray-600/40 text-white"
+                        : "border-2 border-gray-500/60 bg-gray-600/30 text-gray-300 hover:border-[#95E100]/60 hover:text-white"
                     }`}
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <div className="font-semibold">Short Term</div>
+                        <div className="font-bold mb-1">Short Term</div>
                         <div className="text-xs opacity-80">30 days</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold">APR</div>
+                        <div className="font-bold mb-1">APR</div>
                         <div className="text-xs">(...)</div>
                       </div>
                     </div>
@@ -128,7 +128,7 @@ export default function LoanWidget() {
 
           </div>
           
-        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+        <button className="w-full bg-gradient-to-r from-[#95E100] to-[#95E100]/90 hover:from-[#95E100]/90 hover:to-[#95E100] text-gray-900 font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
           Get Loan
         </button>
       </div>

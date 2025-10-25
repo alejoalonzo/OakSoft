@@ -8,12 +8,18 @@ export default function LoansPage() {
       <div className="container mx-auto px-4 py-8 pt-24">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Loans
+          <h1
+            className="text-white text-center align-middle uppercase"
+            style={{
+              fontFamily: "var(--font-abhaya-libre), serif",
+              fontWeight: 800,
+              fontSize: "48px",
+              lineHeight: "76.8px",
+              letterSpacing: "11px",
+            }}
+          >
+            LOANS
           </h1>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Secure crypto-backed loans 
-          </p>
         </div>
 
         {/* Content Area */}
@@ -24,7 +30,7 @@ export default function LoansPage() {
               <h4 className="text-blue-300 font-semibold mb-4 text-lg">How it works:</h4>
               <ul className="text-blue-200 space-y-2">
                 <li>• Deposit your crypto as collateral</li>
-                <li>• Receive instant loan in stablecoins</li>
+                <li>• Receive instant loan</li>
                 <li>• Repay to unlock your collateral</li>
                 <li>• No credit checks required</li>
               </ul>
