@@ -77,12 +77,21 @@ const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID;
 
 // Define widget config outside component to prevent recreation
 const WIDGET_CONFIG = {
-  variant: "compact",
-  subvariant: "split", 
-  subvariantOptions: { split: "swap" },
+  variant: "wide",
+  subvariant: "swap", 
+  // subvariantOptions: { split: "swap" },
+  subvariantOptions: {
+    wide: {
+      enableChainSidebar: true,
+    }
+  },
   appearance: "dark",
   hiddenUI: ['poweredBy'], // This hides the "Powered by LI.FI" branding
   theme: {
+    palette: {
+      primary: { main: '#95E100' },
+      secondary: { main: '#FFFFFF' },
+    },
     container: { 
       border: "none", 
       borderRadius: "12px",
