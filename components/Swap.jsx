@@ -89,6 +89,7 @@ const WIDGET_CONFIG = {
   hiddenUI: ['poweredBy'], // This hides the "Powered by LI.FI" branding
   theme: {
     palette: {
+      mode: 'dark',
       primary: { main: '#95E100' },
       secondary: { main: '#FFFFFF' },
       text: {
@@ -111,19 +112,55 @@ const WIDGET_CONFIG = {
       padding: "0px"
     },
     components: {
-      MuiButton: {
-        styleOverrides: {
-          root: {
-            backgroundColor: '#95E100',
-            color: '#1F2937',
-            fontWeight: 'bold',
-            '&:hover': {
-              backgroundColor: '#7AB800',
+      MuiAppBar: {
+          styleOverrides: {
+            root: {
+              backgroundColor: 'transparent',
+              color: '#FFFFFF',                     
+              // Force white color on all inner elements
+              '& .MuiButton-root': { color: '#FFFFFF' },  // "Connect wallet" (variant text/outlined)
+              '& .MuiButton-outlined': {
+                color: '#FFFFFF',
+                borderColor: 'rgba(255,255,255,0.28)',
+              },
+              '& .MuiChip-root': {                        // address when connected
+                color: '#FFFFFF',
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                borderColor: 'rgba(255,255,255,0.24)',
+              },
+              '& .MuiSvgIcon-root, & .MuiTypography-root': { color: '#FFFFFF' },
             },
           },
         },
+      MuiButton: {
+        styleOverrides: {
+          // common styles for all buttons
+          root: {
+            textTransform: 'none',
+            fontWeight: 600,
+            borderRadius: 10,
+          },
+
+          // Call-to-action buttons (CTA) -> green with dark text (legible)
+          containedPrimary: {
+            backgroundColor: '#95E100',
+            color: '#0B1220',
+            '&:hover': { backgroundColor: '#7AB800' },
+          },
+
+          // Header "Connect wallet" (usually outlined or text) -> light text
+          outlined: {
+            color: '#FFFFFF',
+            borderColor: 'rgba(255,255,255,0.25)',
+            '&:hover': { borderColor: 'rgba(255,255,255,0.45)' },
+          },
+          text: {
+            color: '#FFFFFF',
+          },
+        },
       },
-    },
+      
+    }
   },
   // Clean wallet configuration - no conflicts since no Wagmi
   walletConfig: {
