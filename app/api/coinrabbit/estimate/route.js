@@ -11,7 +11,7 @@ export async function GET(req) {
   const amount = p.get("amount");
   const exchange = p.get("exchange") || "direct";
 
-  // Acepta 'ltv' (50/65/80/90) o 'ltv_percent' (0.5/0.65/0.8/0.9)
+  // Acept 'ltv' (50/65/80/90) o 'ltv_percent' (0.5/0.65/0.8/0.9)
   let ltv_percent;
   if (p.has("ltv_percent")) ltv_percent = Number(p.get("ltv_percent"));
   else if (p.has("ltv")) ltv_percent = Number(p.get("ltv")) / 100;
