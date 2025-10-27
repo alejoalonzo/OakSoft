@@ -8,7 +8,8 @@ export default function LoanWidget() {
 
   const [depositList, setDepositList] = useState([]);
   const [selectedCollateral, setSelectedCollateral] = useState(null);
-
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [currencies, setCurrencies] = useState([]);
   const [loadingCur, setLoadingCur] = useState(false);
@@ -20,6 +21,27 @@ export default function LoanWidget() {
   const findByValue = (v) => {
     const [code, network] = String(v).split("|");
     return depositList.find(c => c.code === code && c.network === network) || null;
+  };
+
+  // Function to get the token logo using the API URL
+  const getTokenLogo = (code, network) => {
+    // Find the token in the list to get its logo_url
+    const token = depositList.find(c => c.code === code && c.network === network);
+    return token?.logo_url || `https://via.placeholder.com/32/6B7280/FFFFFF?text=${code.charAt(0)}`;
+  };
+
+  // Filter tokens based on search term
+  const filteredTokens = depositList.filter(token => 
+    token.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    token.network.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (token.name && token.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  // Handle token selection
+  const handleTokenSelect = (token) => {
+    setSelectedCollateral(token);
+    setIsDropdownOpen(false);
+    setSearchTerm("");
   };
 
 
@@ -34,7 +56,7 @@ export default function LoanWidget() {
 
         // CoinRabbit responde { result: true, response: [...] }
         const arr = Array.isArray(j?.response) ? j.response : [];
-        // Solo monedas válidas para DEPOSIT (colateral)
+        // Only valid currencies for DEPOSIT (collateral)
         const byDeposit = arr
           .filter(c => c?.is_loan_deposit_enabled)
           .sort((a, b) =>
@@ -42,7 +64,7 @@ export default function LoanWidget() {
             String(a.code).localeCompare(String(b.code))
           );
 
-        setCurrencies(arr);       // si luego lo necesitas
+        setCurrencies(arr);       
         setDepositList(byDeposit);
 
         // set default seleccionado
@@ -57,6 +79,21 @@ export default function LoanWidget() {
     })();
     return () => { cancel = true; };
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isDropdownOpen && !event.target.closest('.token-dropdown')) {
+        setIsDropdownOpen(false);
+        setSearchTerm("");
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   
   return (
@@ -77,19 +114,107 @@ export default function LoanWidget() {
                 />
                 <div className="border-l border-gray-600/60"></div>
 
-                <select
-                  className="px-4 py-3 bg-transparent text-white focus:outline-none cursor-pointer min-w-[220px]"
-                  value={selectedCollateral ? optValue(selectedCollateral) : ""}
-                  onChange={(e) => setSelectedCollateral(findByValue(e.target.value))}
-                >
-                  {loadingCur && <option className="bg-gray-700">Cargando…</option>}
-                  {curErr && <option className="bg-gray-700">Error al cargar</option>}
-                  {!loadingCur && !curErr && depositList.map((c) => (
-                    <option key={optValue(c)} value={optValue(c)} className="bg-gray-700">
-                      {optLabel(c)}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative token-dropdown">
+                  <div 
+                    className="flex items-center px-4 py-3 cursor-pointer min-w-[220px] hover:bg-gray-600/20 transition-colors"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  >
+                    {selectedCollateral ? (
+                      <>
+                        <img 
+                          src={getTokenLogo(selectedCollateral.code, selectedCollateral.network)}
+                          alt={selectedCollateral.code}
+                          className="w-6 h-6 rounded-full mr-3"
+                          onError={(e) => {
+                            e.target.src = `https://via.placeholder.com/24/6B7280/FFFFFF?text=${selectedCollateral.code.charAt(0)}`;
+                          }}
+                        />
+                        <div className="flex items-center gap-2 flex-1">
+                          <span className="text-white font-medium">{selectedCollateral.code}</span>
+                          <span className="px-2 py-1 rounded-full text-xs font-medium text-white bg-gray-600">
+                            {selectedCollateral.network}
+                          </span>
+                        </div>
+                        <svg className={`w-4 h-4 text-gray-400 ml-2 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </>
+                    ) : (
+                      <span className="text-gray-400">Seleccionar token...</span>
+                    )}
+                  </div>
+
+                  {/* Custom Dropdown */}
+                  {isDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-600 rounded-xl shadow-2xl z-50 overflow-hidden">
+                      {/* Search Bar */}
+                      <div className="p-4 border-b border-gray-600">
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Search tokens..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#95E100] transition-colors"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Token List */}
+                      <div className="max-h-60 overflow-y-auto">
+                        {loadingCur ? (
+                          <div className="p-4 text-center text-gray-400">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#95E100] mx-auto"></div>
+                            <span className="mt-2 block">Cargando tokens...</span>
+                          </div>
+                        ) : curErr ? (
+                          <div className="p-4 text-center text-red-400">
+                            Error al cargar tokens
+                          </div>
+                        ) : filteredTokens.length === 0 ? (
+                          <div className="p-4 text-center text-gray-400">
+                            No se encontraron tokens
+                          </div>
+                        ) : (
+                          filteredTokens.map((token) => (
+                            <div
+                              key={optValue(token)}
+                              onClick={() => handleTokenSelect(token)}
+                              className="flex items-center px-4 py-3 hover:bg-gray-700/50 cursor-pointer transition-colors border-b border-gray-700/30 last:border-b-0"
+                            >
+                              <img 
+                                src={getTokenLogo(token.code, token.network)}
+                                alt={token.code}
+                                className="w-8 h-8 rounded-full mr-3"
+                                onError={(e) => {
+                                  e.target.src = `https://via.placeholder.com/32/6B7280/FFFFFF?text=${token.code.charAt(0)}`;
+                                }}
+                              />
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-white font-medium">{token.code}</span>
+                                  <span className="px-2 py-1 rounded-full text-xs font-medium text-white bg-gray-600">
+                                    {token.network}
+                                  </span>
+                                </div>
+                                {token.name && (
+                                  <div className="text-xs text-gray-400 mt-1">
+                                    {token.name}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               
@@ -105,10 +230,6 @@ export default function LoanWidget() {
                 </div>
                 <div className="border-l border-gray-600/60"></div>
                 <select className="px-5 py-4 bg-transparent text-white focus:outline-none cursor-pointer min-w-[130px] font-medium">
-                  <option value="USDT" className="bg-gray-700">USDT</option>
-                  <option value="USDC" className="bg-gray-700">USDC</option>
-                  <option value="DAI" className="bg-gray-700">DAI</option>
-                  <option value="BUSD" className="bg-gray-700">BUSD</option>
                 </select>
               </div>
               <p className="text-xs text-gray-400 mt-2 ml-1">
