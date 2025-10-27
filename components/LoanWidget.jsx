@@ -1,10 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function LoanWidget() {
   const [selectedLTV, setSelectedLTV] = useState("65");
   const [selectedDuration, setSelectedDuration] = useState("long");
+
+  const [depositList, setDepositList] = useState([]);
+  const [selectedCollateral, setSelectedCollateral] = useState(null);
+
+
+  const [currencies, setCurrencies] = useState([]);
+  const [loadingCur, setLoadingCur] = useState(false);
+  const [curErr, setCurErr] = useState(null);
+
+
+  const optValue = (c) => `${c.code}|${c.network}`;  // id único
+  const optLabel = (c) => `${c.code} (${c.network}) — ${c.name || c.code}`;
+  const findByValue = (v) => {
+    const [code, network] = String(v).split("|");
+    return depositList.find(c => c.code === code && c.network === network) || null;
+  };
+
+
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      setLoadingCur(true);
+      try {
+        const r = await fetch("/api/coinrabbit/currencies?is_enabled=null", { cache: "no-store" });
+        const j = await r.json();
+        if (cancel) return;
+
+        // CoinRabbit responde { result: true, response: [...] }
+        const arr = Array.isArray(j?.response) ? j.response : [];
+        // Solo monedas válidas para DEPOSIT (colateral)
+        const byDeposit = arr
+          .filter(c => c?.is_loan_deposit_enabled)
+          .sort((a, b) =>
+            (a.loan_deposit_priority ?? 999) - (b.loan_deposit_priority ?? 999) ||
+            String(a.code).localeCompare(String(b.code))
+          );
+
+        setCurrencies(arr);       // si luego lo necesitas
+        setDepositList(byDeposit);
+
+        // set default seleccionado
+        if (!selectedCollateral && byDeposit.length) {
+          setSelectedCollateral(byDeposit[0]);
+        }
+      } catch (e) {
+        if (!cancel) setCurErr(e.message || "Error");
+      } finally {
+        if (!cancel) setLoadingCur(false);
+      }
+    })();
+    return () => { cancel = true; };
+  }, []);
+
   
   return (
     <div className="bg-gradient-to-br from-gray-800 to-gray-850 rounded-2xl border border-white/20 p-10 shadow-2xl backdrop-blur-sm">
@@ -16,20 +69,30 @@ export default function LoanWidget() {
               <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">
                 Collateral
               </label>
-              <div className="flex bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-hidden focus-within:border-[#95E100] focus-within:shadow-lg focus-within:shadow-[#95E100]/20 transition-all duration-300 hover:border-gray-500">
+              <div className="flex bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-hidden focus-within:border-[#95E100]  transition-all duration-300 hover:border-gray-500">
                 <input
                   type="number"
-                  placeholder="0.00"
-                  className="flex-1 px-5 py-4 bg-transparent text-white placeholder-gray-400 focus:outline-none text-lg font-medium"
+                  placeholder={selectedCollateral?.loan_deposit_default_amount || "0.00"}
+                  className="flex-1 px-5 py-4 bg-transparent text-white placeholder-gray-400 focus:outline-none text-lg font-medium [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                 />
                 <div className="border-l border-gray-600/60"></div>
-                <select className="px-5 py-4 bg-transparent text-white focus:outline-none cursor-pointer min-w-[130px] font-medium">
-                  <option value="BTC" className="bg-gray-700">BTC</option>
-                  <option value="ETH" className="bg-gray-700">ETH</option>
-                  <option value="USDT" className="bg-gray-700">USDT</option>
-                  <option value="USDC" className="bg-gray-700">USDC</option>
+
+                <select
+                  className="px-4 py-3 bg-transparent text-white focus:outline-none cursor-pointer min-w-[220px]"
+                  value={selectedCollateral ? optValue(selectedCollateral) : ""}
+                  onChange={(e) => setSelectedCollateral(findByValue(e.target.value))}
+                >
+                  {loadingCur && <option className="bg-gray-700">Cargando…</option>}
+                  {curErr && <option className="bg-gray-700">Error al cargar</option>}
+                  {!loadingCur && !curErr && depositList.map((c) => (
+                    <option key={optValue(c)} value={optValue(c)} className="bg-gray-700">
+                      {optLabel(c)}
+                    </option>
+                  ))}
                 </select>
               </div>
+
+              
             </div>
             
             <div>
