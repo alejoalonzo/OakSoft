@@ -1,173 +1,41 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { fmt, sortBy } from "../features/loan/utils/formatting";
+import { useState } from "react";
+import { fmt } from "../features/loan/utils/formatting";
 import { optValue, optLabel, isSameAsCollateral, findByValue, getTokenLogo } from "../features/loan/utils/token";
-import { receiveNetworksOf, prioritize } from "../features/loan/utils/networks";
-import { getCurrencies, getEstimate } from "../features/loan/services/coinrabbit";
-
-
+import useCurrencies from "../features/loan/hooks/useCurrencies";
+import useEstimate from "../features/loan/hooks/useEstimate";
 
 export default function LoanWidget() {
-  // ===== State =====
+  //  UI-only state
   const [selectedLTV, setSelectedLTV] = useState("65");
   const [selectedDuration, setSelectedDuration] = useState("long");
-
-  const [depositList, setDepositList] = useState([]);
-  const [selectedCollateral, setSelectedCollateral] = useState(null);
-
-  const [borrowList, setBorrowList] = useState([]);
-  const [selectedBorrow, setSelectedBorrow] = useState(null);
-
-  const [currencies, setCurrencies] = useState([]);
-  const [loadingCur, setLoadingCur] = useState(false);
-  const [curErr, setCurErr] = useState(null);
-
   const [amount, setAmount] = useState(""); // Collateral amount (user input)
 
-  const [estimate, setEstimate] = useState(null);
-  const [estLoading, setEstLoading] = useState(false);
-  const [estErr, setEstErr] = useState(null);
-
-  // Rate-limit backoff
-  const last429Ref = useRef(0);
-
   // ===== Load currencies (deposit + borrow) =====
-  useEffect(() => {
-    let cancel = false;
-    (async () => {
-      setLoadingCur(true);
-      setCurErr(null);
-      try {
-        const j = await getCurrencies();
-        if (cancel) return;
-
-        const arr = Array.isArray(j?.response) ? j.response : [];
-
-        // Collateral: only deposit-enabled
-        const byDeposit = sortBy(arr.filter((c) => c?.is_loan_deposit_enabled === true), "loan_deposit_priority");
-
-        // Loan (receive): only receive-enabled (clave para evitar 500 por pares imposibles)
-        const byBorrow = sortBy(arr.filter((c) => c?.is_loan_receive_enabled === true), "loan_borrow_priority");
-
-        setCurrencies(arr);
-        setDepositList(byDeposit);
-        setBorrowList(byBorrow);
-
-        if (!selectedCollateral && byDeposit.length) setSelectedCollateral(byDeposit[0]);
-        if (!selectedBorrow && byBorrow.length) setSelectedBorrow(byBorrow[0]);
-      } catch (e) {
-        if (!cancel) setCurErr(e.message || "Error loading currencies");
-      } finally {
-        if (!cancel) setLoadingCur(false);
-      }
-    })();
-    return () => {
-      cancel = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!selectedCollateral || !selectedBorrow) return;
-    const clash = isSameAsCollateral(selectedBorrow, selectedCollateral);
-    if (clash) {
-      const alt = borrowList.find(c => !isSameAsCollateral(c, selectedCollateral));
-      if (alt) setSelectedBorrow(alt);
-    }
-  }, [selectedCollateral, selectedBorrow, borrowList]);
+   const {
+    currencies,
+    depositList,
+    borrowList,
+    selectedCollateral,
+    setSelectedCollateral,
+    selectedBorrow,
+    setSelectedBorrow,
+    loadingCur,
+    curErr,
+  } = useCurrencies();
 
 
   // ===== Estimate with debounce + fallback =====
-  async function runEstimateWithFallback(ctrl) {
-    // simple rate-limit backoff
-    if (Date.now() - last429Ref.current < 60_000) {
-      setEstErr("Rate limit. Try again in ~1 minute.");
-      return;
-    }
-
-    setEstLoading(true);
-    setEstErr(null);
-    setEstimate(null);
-
-    const from = { code: selectedCollateral.code, network: selectedCollateral.network };
-    const to = { code: selectedBorrow.code, network: selectedBorrow.network };
-    const ltvP = Number(selectedLTV) / 100;
-
-    // redes válidas del token (según receive-enabled)
-    const netsAll = receiveNetworksOf(to.code, currencies);
-    const ordered = prioritize(netsAll, to.network);
-    const netsTry = ordered.length ? ordered.slice(0, 3) : [to.network]; // máximo 3 intentos
-
-    for (const net of netsTry) {
-      const params = {
-        from_code: from.code,
-        from_network: from.network,
-        to_code: to.code,
-        to_network: net,
-        amount: String(amount),
-        ltv_percent: String(ltvP),
-        exchange: "direct",
-      };
-
-      try {
-        const j = await getEstimate(params, { signal: ctrl.signal });
-        
-        if (ctrl.signal.aborted) return;
-
-        if (j?.result) {
-          // si cambió la red, sincroniza el selector
-          if (net !== selectedBorrow.network) {
-            const fixed = (borrowList || []).find((c) => c.code === to.code && c.network === net);
-            if (fixed) setSelectedBorrow(fixed);
-          }
-          setEstimate(j.response || null);
-          setEstErr(null);
-          setEstLoading(false);
-          return;
-        }
-
-        const msg = (j?.message || "").toLowerCase();
-        const isPairErr = msg.includes("pair does not exists") || msg.includes("data for currency");
-        if (!isPairErr) {
-          setEstErr(j?.message || "Estimate failed");
-          break;
-        }
-        // si es "pair not exists", continúa probando la siguiente red
-      } catch (e) {
-        if (ctrl.signal.aborted) return;
-        
-        if (e.status === 429 || e.originalError?.status === 429) {
-          last429Ref.current = Date.now();
-          setEstErr("Rate limit. Try again in ~1 minute.");
-          break;
-        }
-
-        const msg = (e.message || "").toLowerCase();
-        const isPairErr = msg.includes("pair does not exists") || msg.includes("data for currency");
-        if (!isPairErr) {
-          setEstErr(e.message || "Estimate failed");
-          break;
-        }
-        // si es "pair not exists", continúa probando la siguiente red
-      }
-    }
-
-    if (!estimate) setEstErr(`No available network for ${to.code} with ${from.code}.`);
-    setEstLoading(false);
-  }
-
-  useEffect(() => {
-    if (!selectedCollateral || !selectedBorrow) return;
-    if (!amount || Number(amount) <= 0) return;
-
-    const ctrl = new AbortController();
-    const t = setTimeout(() => runEstimateWithFallback(ctrl), 400); // debounce 400ms
-    return () => {
-      clearTimeout(t);
-      ctrl.abort();
-    };
-  }, [selectedCollateral, selectedBorrow, amount, selectedLTV, currencies, borrowList]); // deps
+  const { estimate, estLoading, estErr } = useEstimate({
+    amount,
+    selectedCollateral,
+    selectedBorrow,
+    selectedLTV,
+    currencies,
+    borrowList,
+    setSelectedBorrow, // opcional, pero útil para sincronizar si cambia la red
+  });
 
   return (
     <div className="bg-gradient-to-br from-gray-800 to-gray-850 rounded-2xl border border-white/20 p-10 shadow-2xl backdrop-blur-sm">
