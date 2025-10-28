@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { fmt, sortBy } from "../features/loan/utils/formatting";
 import { optValue, optLabel, isSameAsCollateral, findByValue, getTokenLogo } from "../features/loan/utils/token";
 import { receiveNetworksOf, prioritize } from "../features/loan/utils/networks";
+import { getCurrencies, getEstimate } from "../features/loan/services/coinrabbit";
+
 
 
 export default function LoanWidget() {
@@ -35,9 +37,9 @@ export default function LoanWidget() {
     let cancel = false;
     (async () => {
       setLoadingCur(true);
+      setCurErr(null);
       try {
-        const r = await fetch("/api/coinrabbit/currencies?is_enabled=null", { cache: "no-store" });
-        const j = await r.json();
+        const j = await getCurrencies();
         if (cancel) return;
 
         const arr = Array.isArray(j?.response) ? j.response : [];
@@ -55,7 +57,7 @@ export default function LoanWidget() {
         if (!selectedCollateral && byDeposit.length) setSelectedCollateral(byDeposit[0]);
         if (!selectedBorrow && byBorrow.length) setSelectedBorrow(byBorrow[0]);
       } catch (e) {
-        if (!cancel) setCurErr(e.message || "Error");
+        if (!cancel) setCurErr(e.message || "Error loading currencies");
       } finally {
         if (!cancel) setLoadingCur(false);
       }
@@ -98,7 +100,7 @@ export default function LoanWidget() {
     const netsTry = ordered.length ? ordered.slice(0, 3) : [to.network]; // máximo 3 intentos
 
     for (const net of netsTry) {
-      const qs = new URLSearchParams({
+      const params = {
         from_code: from.code,
         from_network: from.network,
         to_code: to.code,
@@ -106,43 +108,49 @@ export default function LoanWidget() {
         amount: String(amount),
         ltv_percent: String(ltvP),
         exchange: "direct",
-      });
+      };
 
-      const r = await fetch(`/api/coinrabbit/estimate?${qs}`, { signal: ctrl.signal, cache: "no-store" });
-      let j;
       try {
-        j = await r.json();
-      } catch {
-        j = {};
-      }
+        const j = await getEstimate(params, { signal: ctrl.signal });
+        
+        if (ctrl.signal.aborted) return;
 
-      if (ctrl.signal.aborted) return;
-
-      if (r.status === 429) {
-        last429Ref.current = Date.now();
-        setEstErr("Rate limit. Try again in ~1 minute.");
-        break;
-      }
-
-      if (r.ok && j?.result) {
-        // si cambió la red, sincroniza el selector
-        if (net !== selectedBorrow.network) {
-          const fixed = (borrowList || []).find((c) => c.code === to.code && c.network === net);
-          if (fixed) setSelectedBorrow(fixed);
+        if (j?.result) {
+          // si cambió la red, sincroniza el selector
+          if (net !== selectedBorrow.network) {
+            const fixed = (borrowList || []).find((c) => c.code === to.code && c.network === net);
+            if (fixed) setSelectedBorrow(fixed);
+          }
+          setEstimate(j.response || null);
+          setEstErr(null);
+          setEstLoading(false);
+          return;
         }
-        setEstimate(j.response || null);
-        setEstErr(null);
-        setEstLoading(false);
-        return;
-      }
 
-      const msg = (j?.message || "").toLowerCase();
-      const isPairErr = msg.includes("pair does not exists") || msg.includes("data for currency");
-      if (!isPairErr) {
-        setEstErr(j?.message || "Estimate failed");
-        break;
+        const msg = (j?.message || "").toLowerCase();
+        const isPairErr = msg.includes("pair does not exists") || msg.includes("data for currency");
+        if (!isPairErr) {
+          setEstErr(j?.message || "Estimate failed");
+          break;
+        }
+        // si es "pair not exists", continúa probando la siguiente red
+      } catch (e) {
+        if (ctrl.signal.aborted) return;
+        
+        if (e.status === 429 || e.originalError?.status === 429) {
+          last429Ref.current = Date.now();
+          setEstErr("Rate limit. Try again in ~1 minute.");
+          break;
+        }
+
+        const msg = (e.message || "").toLowerCase();
+        const isPairErr = msg.includes("pair does not exists") || msg.includes("data for currency");
+        if (!isPairErr) {
+          setEstErr(e.message || "Estimate failed");
+          break;
+        }
+        // si es "pair not exists", continúa probando la siguiente red
       }
-      // si es "pair not exists", continúa probando la siguiente red
     }
 
     if (!estimate) setEstErr(`No available network for ${to.code} with ${from.code}.`);
