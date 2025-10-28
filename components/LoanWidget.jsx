@@ -29,6 +29,9 @@ export default function LoanWidget() {
   // ===== Helpers =====
   const optValue = (c) => `${c.code}|${c.network}`;
   const optLabel = (c) => `${c.code} (${c.network}) — ${c.name || c.code}`;
+  const isSameAsCollateral = (c, collat) =>
+  !!collat && c.code === collat.code && c.network === collat.network;
+
 
   const findByValue = (v, list) => {
     const [code, network] = String(v).split("|");
@@ -111,6 +114,16 @@ export default function LoanWidget() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!selectedCollateral || !selectedBorrow) return;
+    const clash = isSameAsCollateral(selectedBorrow, selectedCollateral);
+    if (clash) {
+      const alt = borrowList.find(c => !isSameAsCollateral(c, selectedCollateral));
+      if (alt) setSelectedBorrow(alt);
+    }
+  }, [selectedCollateral, selectedBorrow, borrowList]);
+
 
   // ===== Estimate with debounce + fallback =====
   async function runEstimateWithFallback(ctrl) {
@@ -271,7 +284,7 @@ export default function LoanWidget() {
                   ? "(...)"
                   : estimate
                   ? `${fmt(estimate.amount_to, 2)} ${selectedBorrow?.code || ""}`
-                  : "$2,450.00"}
+                  : "0"}
               </div>
               <div className="border-l border-gray-600/60"></div>
 
@@ -283,13 +296,13 @@ export default function LoanWidget() {
                 >
                   {loadingCur && <option className="bg-gray-700">Cargando…</option>}
                   {curErr && <option className="bg-gray-700">Error al cargar</option>}
-                  {!loadingCur &&
-                    !curErr &&
-                    borrowList.map((c) => (
+                  {!loadingCur && !curErr && borrowList
+                    .filter(c => !isSameAsCollateral(c, selectedCollateral))
+                    .map(c => (
                       <option key={optValue(c)} value={optValue(c)} className="bg-gray-700">
                         {optLabel(c)}
                       </option>
-                    ))}
+                  ))}
                 </select>
 
                 <div className="flex items-center px-4 py-3 cursor-pointer min-w-[220px] hover:bg-gray-600/20 transition-colors">
