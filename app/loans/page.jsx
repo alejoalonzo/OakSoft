@@ -5,23 +5,31 @@ import LoanWidget from "../../components/LoanWidget";
 export default function LoansPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
-      <div className="container mx-auto px-4 py-8 pt-24">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1
-            className="text-white text-center align-middle uppercase"
-            style={{
-              fontFamily: "var(--font-abhaya-libre), serif",
-              fontWeight: 800,
-              fontSize: "48px",
-              lineHeight: "76.8px",
-              letterSpacing: "11px",
-            }}
-          >
-            LOANS
-          </h1>
-        </div>
+      {/* Title */}
+      <div
+        className="flex justify-center pt-[60px] mb-[60px]"
+        style={{
+          width: "292.07px",
+          height: "76.8px",
+          marginLeft: "auto",
+          marginRight: "auto",
+        }}
+      >
+        <h1
+          className="text-white text-center align-middle uppercase"
+          style={{
+            fontFamily: "var(--font-abhaya-libre), serif",
+            fontWeight: 800,
+            fontSize: "48px",
+            lineHeight: "76.8px",
+            letterSpacing: "11px",
+          }}
+        >
+          LOANS
+        </h1>
+      </div>
 
+      <div className="container mx-auto px-4 py-8">
         {/* Content Area */}
         <div className="max-w-6xl mx-auto">
           {/* Mobile: How it works above widget */}

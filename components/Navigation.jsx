@@ -35,7 +35,7 @@ export default function Navigation() {
   }, [isMenuOpen]);
 
   return (
-    <nav className="bg-white dark:bg-gray-900 shadow-sm relative">
+    <nav className="bg-gray-900 shadow-sm relative">
       <div className="w-full">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
@@ -188,15 +188,15 @@ export default function Navigation() {
             </button>
 
             {isMenuOpen && (
-              <div className="absolute top-16 right-0 bg-transparent z-50">
+              <div className="absolute top-16 right-0 bg-gray-900 shadow-lg rounded-lg z-50">
                 <div className="py-4">
                   <Link
                     href="/"
                     onClick={() => setIsMenuOpen(false)}
                     className={`block transition-colors uppercase mb-4 mr-10 md:mr-36 cursor-pointer ${
                       isActive("/")
-                        ? "text-primary-500 dark:text-accent"
-                        : "text-white hover:text-primary-500 dark:hover:text-accent"
+                        ? "text-primary-500"
+                        : "text-white hover:text-primary-500"
                     }`}
                     style={{
                       fontFamily: "var(--font-abhaya-libre), serif",
@@ -214,8 +214,8 @@ export default function Navigation() {
                     onClick={() => setIsMenuOpen(false)}
                     className={`block transition-colors uppercase mb-4 mr-10 md:mr-36 cursor-pointer ${
                       isActive("/trade")
-                        ? "text-primary-500 dark:text-accent"
-                        : "text-white hover:text-primary-500 dark:hover:text-accent"
+                        ? "text-primary-500"
+                        : "text-white hover:text-primary-500"
                     }`}
                     style={{
                       fontFamily: "var(--font-abhaya-libre), serif",
@@ -233,8 +233,8 @@ export default function Navigation() {
                     onClick={() => setIsMenuOpen(false)}
                     className={`block transition-colors uppercase mr-10 md:mr-36 cursor-pointer ${
                       isActive("/loans")
-                        ? "text-primary-500 dark:text-accent"
-                        : "text-white hover:text-primary-500 dark:hover:text-accent"
+                        ? "text-primary-500"
+                        : "text-white hover:text-primary-500"
                     }`}
                     style={{
                       fontFamily: "var(--font-abhaya-libre), serif",
