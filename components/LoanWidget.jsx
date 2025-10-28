@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { fmt, sortBy } from "../features/loan/utils/formatting";
+import { optValue, optLabel, isSameAsCollateral, findByValue, getTokenLogo } from "../features/loan/utils/token";
+import { receiveNetworksOf, prioritize } from "../features/loan/utils/networks";
+
 
 export default function LoanWidget() {
   // ===== State =====
@@ -25,59 +29,6 @@ export default function LoanWidget() {
 
   // Rate-limit backoff
   const last429Ref = useRef(0);
-
-  // ===== Helpers =====
-  const optValue = (c) => `${c.code}|${c.network}`;
-  const optLabel = (c) => `${c.code} (${c.network}) — ${c.name || c.code}`;
-  const isSameAsCollateral = (c, collat) =>
-  !!collat && c.code === collat.code && c.network === collat.network;
-
-
-  const findByValue = (v, list) => {
-    const [code, network] = String(v).split("|");
-    return (list || []).find((c) => c.code === code && c.network === network) || null;
-  };
-
-  const getTokenLogo = (list, code, network) => {
-    const token = (list || []).find((c) => c.code === code && c.network === network);
-    return token?.logo_url || `https://via.placeholder.com/32/6B7280/FFFFFF?text=${(code || "?").charAt(0)}`;
-  };
-
-  const fmt = (n, p = 2) => {
-    if (n == null || n === "") return "";
-    const num = Number(n);
-    return Number.isFinite(num) ? num.toFixed(p) : String(n);
-  };
-
-  const sortBy = (list, prioKey) =>
-    (list || [])
-      .filter((c) => c?.code && c?.network)
-      .sort(
-        (a, b) =>
-          ((a?.[prioKey] ?? 999) - (b?.[prioKey] ?? 999)) ||
-          String(a.code).localeCompare(String(b.code))
-      );
-
-  const NET_ORDER = ["ETH", "ARBITRUM", "BASE", "BSC", "AVAXC", "MATIC", "TRX", "SOL"];
-
-  function receiveNetworksOf(code, all) {
-    return [
-      ...new Set(
-        (all || [])
-          .filter((c) => c.code === code && c.is_loan_receive_enabled === true)
-          .map((c) => c.network)
-      ),
-    ];
-  }
-
-  function prioritize(nets, prefer) {
-    const scored = nets.map((n) => ({ n, s: NET_ORDER.indexOf(n) }));
-    scored.sort(
-      (a, b) =>
-        (a.n === prefer ? -1 : b.n === prefer ? 1 : (a.s < 0) - (b.s < 0) || a.s - b.s)
-    );
-    return scored.map((x) => x.n);
-  }
 
   // ===== Load currencies (deposit + borrow) =====
   useEffect(() => {
