@@ -5,6 +5,7 @@ import { fmt } from "../features/loan/utils/formatting";
 import { optValue, optLabel, isSameAsCollateral, findByValue, getTokenLogo } from "../features/loan/utils/token";
 import useCurrencies from "../features/loan/hooks/useCurrencies";
 import useEstimate from "../features/loan/hooks/useEstimate";
+import TokenSelect from "../features/loan/ui/tokenSelect.jsx";
 
 export default function LoanWidget() {
   //  UI-only state
@@ -34,7 +35,7 @@ export default function LoanWidget() {
     selectedLTV,
     currencies,
     borrowList,
-    setSelectedBorrow, // opcional, pero útil para sincronizar si cambia la red
+    setSelectedBorrow, // optional
   });
 
   return (
@@ -43,10 +44,10 @@ export default function LoanWidget() {
         <h3 className="text-2xl font-bold text-white tracking-tight">Loan Calculator</h3>
 
         <div className="space-y-6">
-          {/* ===== Collateral (con Amount conectado) ===== */}
+          {/* ===== Collateral (with Amount connected) ===== */}
           <div>
             <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">Collateral</label>
-            <div className="flex bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-hidden focus-within:border-[#95E100] transition-all duration-300 hover:border-gray-500">
+            <div className="flex bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-visible focus-within:border-[#95E100] transition-all duration-300 hover:border-gray-500">
               <input
                 type="number"
                 value={amount}
@@ -55,118 +56,45 @@ export default function LoanWidget() {
                 className="flex-1 px-5 py-4 bg-transparent text-white placeholder-gray-400 focus:outline-none text-lg font-medium [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
               />
               <div className="border-l border-gray-600/60"></div>
-
-              <div className="relative">
-                <select
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  value={selectedCollateral ? optValue(selectedCollateral) : ""}
-                  onChange={(e) => setSelectedCollateral(findByValue(e.target.value, depositList))}
-                >
-                  {loadingCur && <option className="bg-gray-700">Cargando…</option>}
-                  {curErr && <option className="bg-gray-700">Error al cargar</option>}
-                  {!loadingCur &&
-                    !curErr &&
-                    depositList.map((c) => (
-                      <option key={optValue(c)} value={optValue(c)} className="bg-gray-700">
-                        {optLabel(c)}
-                      </option>
-                    ))}
-                </select>
-
-                <div className="flex items-center px-4 py-3 cursor-pointer min-w-[220px] hover:bg-gray-600/20 transition-colors">
-                  {selectedCollateral ? (
-                    <>
-                      <img
-                        src={getTokenLogo(depositList, selectedCollateral.code, selectedCollateral.network)}
-                        alt={selectedCollateral.code}
-                        className="w-6 h-6 rounded-full mr-3"
-                        onError={(e) => {
-                          e.currentTarget.src = `https://via.placeholder.com/24/6B7280/FFFFFF?text=${selectedCollateral.code.charAt(0)}`;
-                        }}
-                      />
-                      <div className="flex items-center gap-2 flex-1">
-                        <span className="text-white font-medium">{selectedCollateral.code}</span>
-                        <span className="px-2 py-1 rounded-full text-xs font-medium text-white bg-gray-600">
-                          {selectedCollateral.network}
-                        </span>
-                      </div>
-                      <svg className="w-4 h-4 text-gray-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </>
-                  ) : (
-                    <span className="text-gray-400">Seleccionar token...</span>
-                  )}
-                </div>
+              <div className="px-3 py-2 min-w-[240px]">
+                <TokenSelect
+                  list={depositList}
+                  value={selectedCollateral}
+                  onChange={setSelectedCollateral}
+                  disabled={loadingCur || !!curErr}
+                  placeholder="Seleccionar token…"
+                  getIcon={(it) => getTokenLogo(depositList, it.code, it.network)}
+                />
               </div>
             </div>
           </div>
 
-          {/* ===== Loan token + resultado ===== */}
+          {/* ===== Loan token + result ===== */}
           <div>
             <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">Loan</label>
-            <div className="flex bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-hidden">
+            <div className="flex bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-visible">
               <div className="flex-1 px-5 py-4 bg-transparent text-white font-bold text-xl flex items-center">
-                {estLoading
-                  ? "(...)"
-                  : estimate
-                  ? `${fmt(estimate.amount_to, 2)} ${selectedBorrow?.code || ""}`
-                  : "0"}
+                {estLoading ? "(...)" : estimate ? `${fmt(estimate.amount_to, 2)} ${selectedBorrow?.code || ""}` : "0"}
               </div>
               <div className="border-l border-gray-600/60"></div>
-
-              <div className="relative">
-                <select
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  value={selectedBorrow ? optValue(selectedBorrow) : ""}
-                  onChange={(e) => setSelectedBorrow(findByValue(e.target.value, borrowList))}
-                >
-                  {loadingCur && <option className="bg-gray-700">Cargando…</option>}
-                  {curErr && <option className="bg-gray-700">Error al cargar</option>}
-                  {!loadingCur && !curErr && borrowList
-                    .filter(c => !isSameAsCollateral(c, selectedCollateral))
-                    .map(c => (
-                      <option key={optValue(c)} value={optValue(c)} className="bg-gray-700">
-                        {optLabel(c)}
-                      </option>
-                  ))}
-                </select>
-
-                <div className="flex items-center px-4 py-3 cursor-pointer min-w-[220px] hover:bg-gray-600/20 transition-colors">
-                  {selectedBorrow ? (
-                    <>
-                      <img
-                        src={getTokenLogo(borrowList, selectedBorrow.code, selectedBorrow.network)}
-                        alt={selectedBorrow.code}
-                        className="w-6 h-6 rounded-full mr-3"
-                        onError={(e) => {
-                          e.currentTarget.src = `https://via.placeholder.com/24/6B7280/FFFFFF?text=${selectedBorrow.code.charAt(0)}`;
-                        }}
-                      />
-                      <div className="flex items-center gap-2 flex-1">
-                        <span className="text-white font-medium">{selectedBorrow.code}</span>
-                        <span className="px-2 py-1 rounded-full text-xs font-medium text-white bg-gray-600">
-                          {selectedBorrow.network}
-                        </span>
-                      </div>
-                      <svg className="w-4 h-4 text-gray-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </>
-                  ) : (
-                    <span className="text-gray-400">Seleccionar token...</span>
-                  )}
-                </div>
+              <div className="px-3 py-2 min-w-[240px]">
+                <TokenSelect
+                  list={borrowList}
+                  value={selectedBorrow}
+                  onChange={setSelectedBorrow}
+                  disabled={loadingCur || !!curErr}
+                  placeholder="Seleccionar token…"
+                  getIcon={(it) => getTokenLogo(borrowList, it.code, it.network)}
+                  // Oculta items que colisionan con el colateral:
+                  hideItem={(it) => isSameAsCollateral(it, selectedCollateral)}
+                />
               </div>
             </div>
+
             <p className="text-xs text-gray-400 mt-2 ml-1">
               Amount calculated based on LTV ratio and current market prices
             </p>
-            {estErr && (
-              <p className="text-xs text-red-400 mt-2 ml-1">
-                {estErr}
-              </p>
-            )}
+            {estErr && <p className="text-xs text-red-400 mt-2 ml-1">{estErr}</p>}
           </div>
 
           {/* ===== LTV ===== */}
