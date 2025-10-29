@@ -32,3 +32,27 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Scrollbar dark (Chrome/Edge/Safari + Firefox) */
+.scroll-trans {
+  scrollbar-width: thin;                       /* Firefox */
+  scrollbar-color: rgba(255,255,255,.28) transparent;
+}
+.scroll-trans::-webkit-scrollbar {             /* WebKit */
+  width: 10px;
+}
+.scroll-trans::-webkit-scrollbar-track {
+  background: transparent;                     /* <-- track transparent */
+}
+.scroll-trans::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,.28);     /* thumb tenue */
+  border-radius: 9999px;
+  border: 2px solid transparent;               
+  background-clip: content-box;
+}
+.scroll-trans:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,.4);      /* more visible on hover */
+}
+.scroll-trans::-webkit-scrollbar-corner {
+  background: transparent;
+}

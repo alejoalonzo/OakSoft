@@ -180,13 +180,13 @@ export default function TokenSelect({
                 setQuery(e.target.value);
                 setActiveIndex(0);
               }}
-              placeholder="Buscar por código, red…"
+              placeholder="Search…"
               className="w-full px-3 py-2 rounded-md bg-gray-700/60 text-white placeholder-gray-400 outline-none"
             />
           </div>
 
           {/* List */}
-          <ul ref={listRef} className="max-h-72 overflow-auto py-1">
+          <ul ref={listRef} className="max-h-72 overflow-auto py-1 scroll-trans">
             {filtered.length === 0 && (
               <li className="px-3 py-3 text-sm text-gray-400">No results</li>
             )}
