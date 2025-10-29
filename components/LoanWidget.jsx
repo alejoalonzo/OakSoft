@@ -47,16 +47,16 @@ export default function LoanWidget() {
           {/* ===== Collateral (with Amount connected) ===== */}
           <div>
             <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">Collateral</label>
-            <div className="flex bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-visible focus-within:border-[#95E100] transition-all duration-300 hover:border-gray-500">
+            <div className="flex flex-col sm:flex-row bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-visible focus-within:border-[#95E100] transition-all duration-300 hover:border-gray-500 gap-2 sm:gap-0">
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder={selectedCollateral?.loan_deposit_default_amount || "0.00"}
-                className="flex-1 px-5 py-4 bg-transparent text-white placeholder-gray-400 focus:outline-none text-lg font-medium [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                className="flex-1 min-w-0 px-5 py-4 bg-transparent text-white placeholder-gray-400 focus:outline-none text-lg font-medium [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
               />
-              <div className="border-l border-gray-600/60"></div>
-              <div className="px-3 py-2 min-w-[240px]">
+              <div className="border-gray-600/60 sm:border-l sm:border-t-0 border-t"></div>
+              <div className="px-3 py-2 w-full sm:w-auto sm:min-w-[240px] min-w-0">
                 <TokenSelect
                   list={depositList}
                   value={selectedCollateral}
@@ -72,12 +72,12 @@ export default function LoanWidget() {
           {/* ===== Loan token + result ===== */}
           <div>
             <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">Loan</label>
-            <div className="flex bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-visible">
-              <div className="flex-1 px-5 py-4 bg-transparent text-white font-bold text-xl flex items-center">
+            <div className="flex flex-col sm:flex-row bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-visible gap-2 sm:gap-0">
+              <div className="flex-1 min-w-0 px-5 py-4 bg-transparent text-white font-bold text-xl flex items-center">
                 {estLoading ? "(...)" : estimate ? `${fmt(estimate.amount_to, 2)} ${selectedBorrow?.code || ""}` : "0"}
               </div>
-              <div className="border-l border-gray-600/60"></div>
-              <div className="px-3 py-2 min-w-[240px]">
+              <div className="border-gray-600/60 sm:border-l sm:border-t-0 border-t"></div>
+              <div className="px-3 py-2 w-full sm:w-auto sm:min-w-[240px] min-w-0">
                 <TokenSelect
                   list={borrowList}
                   value={selectedBorrow}
