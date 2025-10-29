@@ -130,7 +130,7 @@ export default function LoanWidget() {
           <div>
             <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">Choose APR</label>
             <div className="bg-gray-700/30 rounded-xl p-4 border border-gray-600/40">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   onClick={() => setSelectedDuration("long")}
                   className={`p-5 rounded-xl font-medium text-sm transition-all duration-300 text-left transform hover:scale-105 ${
