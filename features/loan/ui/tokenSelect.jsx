@@ -169,7 +169,7 @@ export default function TokenSelect({
           aria-activedescendant={`ts-item-${activeIndex}`}
           tabIndex={-1}
           onKeyDown={onMenuKeyDown}
-          className="absolute z-50 mt-2 w-full rounded-xl border border-white/10 bg-gray-800/95 backdrop-blur-sm shadow-2xl"
+          className="absolute z-50 mt-4 -left-3 -right-3 rounded-xl border border-white/10 bg-gray-800/95 backdrop-blur-sm shadow-2xl"
         >
           {/* Search */}
           <div className="p-2 border-b border-white/10">

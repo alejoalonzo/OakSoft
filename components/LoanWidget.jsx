@@ -56,7 +56,9 @@ export default function LoanWidget() {
                 className="flex-1 min-w-0 px-5 py-4 bg-transparent text-white placeholder-gray-400 focus:outline-none text-lg font-medium [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
               />
               <div className="border-gray-600/60 sm:border-l sm:border-t-0 border-t"></div>
-              <div className="px-3 py-2 w-full sm:w-auto sm:min-w-[240px] min-w-0">
+
+              {/* ⬇️ Bloque derecho: ancho fijo en desktop, full en mobile */}
+              <div className="px-3 py-2 w-full sm:flex-none sm:basis-[280px] min-w-0">
                 <TokenSelect
                   list={depositList}
                   value={selectedCollateral}
@@ -64,6 +66,7 @@ export default function LoanWidget() {
                   disabled={loadingCur || !!curErr}
                   placeholder="Seleccionar token…"
                   getIcon={(it) => getTokenLogo(depositList, it.code, it.network)}
+                  className="w-full"   // el botón llena el bloque derecho
                 />
               </div>
             </div>
@@ -77,7 +80,9 @@ export default function LoanWidget() {
                 {estLoading ? "(...)" : estimate ? `${fmt(estimate.amount_to, 2)} ${selectedBorrow?.code || ""}` : "0"}
               </div>
               <div className="border-gray-600/60 sm:border-l sm:border-t-0 border-t"></div>
-              <div className="px-3 py-2 w-full sm:w-auto sm:min-w-[240px] min-w-0">
+
+              {/* ⬇️ Bloque derecho: ancho fijo en desktop, full en mobile */}
+              <div className="px-3 py-2 w-full sm:flex-none sm:basis-[280px] min-w-0">
                 <TokenSelect
                   list={borrowList}
                   value={selectedBorrow}
@@ -85,8 +90,8 @@ export default function LoanWidget() {
                   disabled={loadingCur || !!curErr}
                   placeholder="Seleccionar token…"
                   getIcon={(it) => getTokenLogo(borrowList, it.code, it.network)}
-                  // Oculta items que colisionan con el colateral:
                   hideItem={(it) => isSameAsCollateral(it, selectedCollateral)}
+                  className="w-full"   // el botón llena el bloque derecho
                 />
               </div>
             </div>
