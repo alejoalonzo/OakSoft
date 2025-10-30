@@ -4,21 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { receiveNetworksOf, prioritize } from "../utils/networks";
 import { getEstimate } from "../services/coinrabbit";
 
-/**
- * Calculates the estimate with debounce, retries per alternate network
- * and backoff for 429. Keeps estLoading/estErr/estimate.
- *
- * Args:
- * - amount (string|number)
- * - selectedCollateral ({code, network})
- * - selectedBorrow ({code, network})
- * - selectedLTV ("50" | "65" | "80" | "90" | etc.)
- * - currencies (full list, to discover the networks for the token to be received)
- * - borrowList (to sync the selector if we change the network)
- * - setSelectedBorrow (widget setter, optional but recommended)
- * - debounceMs (default 400)
- * - maxTryNetworks (default 3)
- */
 export default function useEstimate({
   amount,
   selectedCollateral,
@@ -34,7 +19,10 @@ export default function useEstimate({
   const [estLoading, setEstLoading] = useState(false);
   const [estErr, setEstErr] = useState(null);
 
-  // simple rate-limit backoff memory
+  // APRs derivados del estimate
+  const [longApr, setLongApr] = useState(null);
+  const [shortApr, setShortApr] = useState(null);
+
   const last429Ref = useRef(0);
 
   useEffect(() => {
@@ -53,12 +41,17 @@ export default function useEstimate({
       setEstLoading(true);
       setEstErr(null);
       setEstimate(null);
+      setLongApr(null);
+      setShortApr(null);
 
       const from = {
         code: selectedCollateral.code,
         network: selectedCollateral.network,
       };
-      const to = { code: selectedBorrow.code, network: selectedBorrow.network };
+      const to = {
+        code: selectedBorrow.code,
+        network: selectedBorrow.network,
+      };
       const ltvP = Number(selectedLTV) / 100;
 
       const allNets = receiveNetworksOf(to.code, currencies);
@@ -66,6 +59,8 @@ export default function useEstimate({
       const netsTry = ordered.length
         ? ordered.slice(0, maxTryNetworks)
         : [to.network];
+
+      let success = false;
 
       for (const net of netsTry) {
         const params = {
@@ -80,22 +75,37 @@ export default function useEstimate({
 
         try {
           const j = await getEstimate(params, { signal: ctrl.signal });
+          console.log("Estimate RAW >>>", j);
           if (ctrl.signal.aborted) return;
 
           if (j?.result) {
-            // si la red cambia, opcionalmente sincroniza el selector del widget
+            const data = j.response || null;
+
+            // si cambió la red, sincroniza el select
             if (net !== to.network && typeof setSelectedBorrow === "function") {
               const fixed = (borrowList || []).find(
                 c => c.code === to.code && c.network === net
               );
               if (fixed) setSelectedBorrow(fixed);
             }
-            setEstimate(j.response || null);
+
+            setEstimate(data);
+
+            // ⬇️ derivar APRs AQUÍ, usando el JSON real que mostraste
+            const la =
+              data?.fixed_apr_unlimited_loan ?? data?.interest_percent ?? null;
+            const sa = data?.fixed_apr_fixed_loan ?? null;
+
+            setLongApr(la != null ? Number(la) : null);
+            setShortApr(sa != null ? Number(sa) : null);
+
             setEstErr(null);
             setEstLoading(false);
-            return;
+            success = true;
+            break;
           }
 
+          // si vino error de “no existe el par”, prueba la siguiente red
           const msg = (j?.message || "").toLowerCase();
           const isPairErr =
             msg.includes("pair does not exists") ||
@@ -104,7 +114,6 @@ export default function useEstimate({
             setEstErr(j?.message || "Estimate failed");
             break;
           }
-          // if the "pair not exists", try next network
         } catch (e) {
           if (ctrl.signal.aborted) return;
 
@@ -122,16 +131,21 @@ export default function useEstimate({
             setEstErr(e?.message || "Estimate failed");
             break;
           }
+          // si es “pair not exists”, sigue con la siguiente red
         }
       }
 
-      setEstLoading(false);
-      if (!estimate) {
+      if (!success) {
+        setEstimate(null);
+        setLongApr(null);
+        setShortApr(null);
         setEstErr(`No available network for ${to.code} with ${from.code}.`);
       }
+
+      setEstLoading(false);
     };
 
-    const t = setTimeout(run, debounceMs); // debounce
+    const t = setTimeout(run, debounceMs);
     return () => {
       clearTimeout(t);
       ctrl.abort();
@@ -146,5 +160,6 @@ export default function useEstimate({
     borrowList,
   ]);
 
-  return { estimate, estLoading, estErr };
+  // ahora el hook devuelve los APR listos
+  return { estimate, estLoading, estErr, longApr, shortApr };
 }
