@@ -1,54 +1,18 @@
-export const runtime = "nodejs"; // firebase-admin necesita Node
+export const runtime = "nodejs";
 
 import { requireUser } from "@/app/api/_utils/auth";
-
-const KEY = process.env.COINRABBIT_API_KEY;
-const API = process.env.COINRABBIT_BASE_URL;
+import { ensureCoinrabbitUserToken } from "@/app/api/_utils/coinrabbitUser";
 
 export async function GET(req) {
   try {
-    if (!API || !KEY) {
-      return Response.json(
-        { error: "Missing env COINRABBIT_API_BASE or COINRABBIT_API_KEY" },
-        { status: 500 }
-      );
-    }
     const uid = await requireUser(req);
 
-    const r = await fetch(`${API}/auth/partner`, {
-      method: "POST",
-      headers: {
-        "x-api-key": KEY,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ external_id: uid }),
-      cache: "no-store",
-    });
+    // here we test the helper for real
+    const token = await ensureCoinrabbitUserToken(uid);
 
-    const text = await r.text();
-
-    if (!r.ok) {
-      // pasa el error tal cual (puede ser JSON o texto)
-      return new Response(text, {
-        status: r.status,
-        headers: {
-          "content-type": r.headers.get("content-type") || "text/plain",
-        },
-      });
-    }
-
-    let j;
-    try {
-      j = JSON.parse(text);
-    } catch {
-      j = { raw: text };
-    }
-
-    const token = j?.response?.token;
-
-    return Response.json({ ok: true, hasToken: !!token, raw: j });
+    return Response.json({ ok: true, hasToken: !!token });
   } catch (e) {
-    if (e instanceof Response) return e; // respeta 401 de requireUser
+    if (e instanceof Response) return e;
     return new Response(JSON.stringify({ error: e?.message || String(e) }), {
       status: 500,
     });
