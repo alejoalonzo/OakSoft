@@ -1,3 +1,5 @@
+import { getIdToken } from "./session";
+
 const BASE = "/api/coinrabbit";
 
 async function fetchJSON(path, opts = {}) {
@@ -72,15 +74,26 @@ export async function getEstimate(params, opts = {}) {
   }
 }
 
-// Next loan API calls*************************
-export function createLoan(body) {
-  return fetchJSON(`/loans`, {
+export async function createLoan(payload) {
+  const idToken = await getIdToken();
+  const res = await fetch("/api/coinrabbit/create", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
+    },
+    body: JSON.stringify(payload),
   });
+  const text = await res.text();
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    json = { raw: text };
+  }
+  if (!res.ok) throw new Error(json?.error || text);
+  return json;
 }
-
 export function getLoanById(id) {
   return fetchJSON(`/loans/${id}`);
 }
