@@ -7,12 +7,14 @@ import useCurrencies from "../features/loan/hooks/useCurrencies";
 import useEstimate from "../features/loan/hooks/useEstimate";
 import useCreateLoan from "@/features/loan/hooks/useCreateLoan";
 import TokenSelect from "../features/loan/ui/tokenSelect.jsx";
+import ConfirmLoanModal from "../features/loan/ui/ConfirmLoanModal.jsx"; 
 
 export default function LoanWidget() {
   //  UI-only state
   const [selectedLTV, setSelectedLTV] = useState("65");
   const [selectedDuration, setSelectedDuration] = useState("long");
   const [amount, setAmount] = useState(""); // Collateral amount (user input)
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // ===== Load currencies (deposit + borrow) =====
    const {
@@ -47,6 +49,48 @@ export default function LoanWidget() {
     selectedLTV,
     estimate,
   });
+
+  // Modal "Get Loan"
+  const handleGetLoanClick = async () => {
+    try {
+      await handleCreate();   // only wait for creation
+      setShowConfirm(true);   // always open the modal if no error
+    } catch (e) {
+      console.error(e);
+      // toast or something here
+    }
+  };
+
+  // ===== Summary data for the confirmation modal =====
+  const confirmSummary =
+    estimate && selectedCollateral && selectedBorrow
+      ? {
+          collateralAmount: Number(amount || 0),
+          collateralCode: selectedCollateral.code,
+          loanAmount: Number(estimate.amount_to ?? 0),
+          borrowCode: selectedBorrow.code,
+          borrowNetwork: selectedBorrow.network,
+          ltv: Number(selectedLTV),
+          apr:
+            selectedDuration === "long"
+              ? Number(
+                  estimate.fixed_apr_unlimited_loan ??
+                    estimate.interest_percent ??
+                    0
+                )
+              : Number(
+                  estimate.fixed_apr_fixed_loan ??
+                    estimate.interest_percent ??
+                    0
+                ),
+          monthlyInterest: Number(
+            estimate.interest_amounts?.month ?? 0
+          ),
+          fee: Number(estimate.one_month_fee ?? 0),
+          liquidationPrice: Number(estimate.down_limit ?? 0),
+        }
+      : null;
+
 
   return (
     <div className="bg-gradient-to-br from-gray-800 to-gray-850 rounded-2xl border border-white/20 p-10 shadow-2xl backdrop-blur-sm">
@@ -198,7 +242,7 @@ export default function LoanWidget() {
 
         {/* Button Create (get loan) (UI) */}
         <button
-          onClick={handleCreate}
+          onClick={handleGetLoanClick}
           disabled={
             creating ||
             !amount ||
@@ -215,8 +259,14 @@ export default function LoanWidget() {
         {createErr && (
           <p className="text-xs text-red-400 mt-2 ml-1">{createErr}</p>
         )}
-
       </div>
+      {/* Confirmation Modal */}
+      <ConfirmLoanModal
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        loan={lastLoan}
+        summary={confirmSummary}
+      />
     </div>
   );
 }
