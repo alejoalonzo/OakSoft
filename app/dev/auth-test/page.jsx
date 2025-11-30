@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { getIdToken } from "@/features/loan/services/session";
+import CreateLoanTest from "./CreateLoanTest";
 
 export default function AuthTest() {
   const [out, setOut] = useState(null);
@@ -32,6 +33,8 @@ export default function AuthTest() {
       <button onClick={run}>Try AUTH</button>
       {out && <pre>{JSON.stringify(out, null, 2)}</pre>}
       {err && <pre style={{color:"red"}}>{err}</pre>}
+
+      <CreateLoanTest />
     </div>
   );
 }

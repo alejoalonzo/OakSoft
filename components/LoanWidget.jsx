@@ -5,6 +5,7 @@ import { fmt } from "../features/loan/utils/formatting";
 import { optValue, optLabel, isSameAsCollateral, findByValue, getTokenLogo } from "../features/loan/utils/token";
 import useCurrencies from "../features/loan/hooks/useCurrencies";
 import useEstimate from "../features/loan/hooks/useEstimate";
+import useCreateLoan from "@/features/loan/hooks/useCreateLoan";
 import TokenSelect from "../features/loan/ui/tokenSelect.jsx";
 
 export default function LoanWidget() {
@@ -38,6 +39,15 @@ export default function LoanWidget() {
     setSelectedBorrow, // optional
   });
 
+    // ===== Create loan hook =====
+  const { handleCreate, creating, createErr, lastLoan } = useCreateLoan({
+    amount,
+    selectedCollateral,
+    selectedBorrow,
+    selectedLTV,
+    estimate,
+  });
+
   return (
     <div className="bg-gradient-to-br from-gray-800 to-gray-850 rounded-2xl border border-white/20 p-10 shadow-2xl backdrop-blur-sm">
       <div className="space-y-8">
@@ -57,7 +67,7 @@ export default function LoanWidget() {
               />
               <div className="border-gray-600/60 sm:border-l sm:border-t-0 border-t"></div>
 
-              {/* ⬇️ Bloque derecho: ancho fijo en desktop, full en mobile */}
+              {/*  Right Block: fixed width on desktop, full on mobile */}
               <div className="px-3 py-2 w-full sm:flex-none sm:basis-[280px] min-w-0">
                 <TokenSelect
                   list={depositList}
@@ -66,7 +76,7 @@ export default function LoanWidget() {
                   disabled={loadingCur || !!curErr}
                   placeholder="Seleccionar token…"
                   getIcon={(it) => getTokenLogo(depositList, it.code, it.network)}
-                  className="w-full"   // el botón llena el bloque derecho
+                  className="w-full"   // the button fills the right block
                 />
               </div>
             </div>
@@ -81,7 +91,7 @@ export default function LoanWidget() {
               </div>
               <div className="border-gray-600/60 sm:border-l sm:border-t-0 border-t"></div>
 
-              {/* ⬇️ Bloque derecho: ancho fijo en desktop, full en mobile */}
+              {/*  Right Block: fixed width on desktop, full on mobile */}
               <div className="px-3 py-2 w-full sm:flex-none sm:basis-[280px] min-w-0">
                 <TokenSelect
                   list={borrowList}
@@ -91,7 +101,7 @@ export default function LoanWidget() {
                   placeholder="Seleccionar token…"
                   getIcon={(it) => getTokenLogo(borrowList, it.code, it.network)}
                   hideItem={(it) => isSameAsCollateral(it, selectedCollateral)}
-                  className="w-full"   // el botón llena el bloque derecho
+                  className="w-full"   // the button fills the right block
                 />
               </div>
             </div>
@@ -126,7 +136,7 @@ export default function LoanWidget() {
             </div>
           </div>
 
-          {/* ===== APR desde estimate ===== */}
+          {/* ===== APR from estimate ===== */}
           <div>
             <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">Choose APR</label>
             <div className="bg-gray-700/30 rounded-xl p-4 border border-gray-600/40">
@@ -177,7 +187,7 @@ export default function LoanWidget() {
               </div>
             </div>
 
-            {/* Extras útiles de Estimate */}
+            {/* Extras for Estimate */}
             <div className="text-xs text-gray-400 space-x-4 mt-2">
               <span>Fee 1m: {estimate?.one_month_fee ?? "-"}</span>
               <span>Interest/mo: {estimate?.interest_amounts?.month ?? "-"}</span>
@@ -186,10 +196,26 @@ export default function LoanWidget() {
           </div>
         </div>
 
-        {/* Botón final (UI) */}
-        <button className="w-full bg-gradient-to-r from-[#95E100] to-[#95E100]/90 hover:from-[#95E100]/90 hover:to-[#95E100] text-gray-900 font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
-          Get Loan
+        {/* Button Create (get loan) (UI) */}
+        <button
+          onClick={handleCreate}
+          disabled={
+            creating ||
+            !amount ||
+            Number(amount) <= 0 ||
+            !selectedCollateral ||
+            !selectedBorrow ||
+            !estimate
+          }
+          className="w-full bg-gradient-to-r from-[#95E100] to-[#95E100]/90 hover:from-[#95E100]/90 hover:to-[#95E100] text-gray-900 font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+        >
+          {creating ? "Creating loan..." : "Get Loan"}
         </button>
+
+        {createErr && (
+          <p className="text-xs text-red-400 mt-2 ml-1">{createErr}</p>
+        )}
+
       </div>
     </div>
   );
