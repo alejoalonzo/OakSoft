@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "./AuthProvider";
 
 // ===== env =====
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID;
@@ -54,7 +55,9 @@ export default function AppProviders({ children }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <AuthProvider>
+        {children}
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

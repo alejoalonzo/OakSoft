@@ -1,4 +1,4 @@
-// /app/api/_utils/coinrabbitLoans.js
+// /app/api/_utils/coinrabbitCreate.js
 import { adminDB } from "@/lib/firebaseAdmin";
 
 export async function saveCoinrabbitLoan({ uid, data, payload }) {

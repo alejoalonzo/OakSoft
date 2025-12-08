@@ -3,7 +3,23 @@ import { getIdToken } from "./session";
 const BASE = "/api/coinrabbit";
 
 async function fetchJSON(path, opts = {}) {
-  const r = await fetch(`${BASE}${path}`, { cache: "no-store", ...opts });
+  const { auth: needsAuth = false, headers, ...rest } = opts;
+
+  let authHeader = {};
+  if (needsAuth) {
+    const idToken = await getIdToken();
+    if (!idToken) throw new Error("No logged in user");
+    authHeader = { Authorization: `Bearer ${idToken}` };
+  }
+
+  const r = await fetch(`${BASE}${path}`, {
+    cache: "no-store",
+    ...rest,
+    headers: {
+      ...(headers || {}),
+      ...authHeader,
+    },
+  });
 
   // Handle aborted requests
   if (opts.signal?.aborted) {
@@ -73,7 +89,7 @@ export async function getEstimate(params, opts = {}) {
     throw enhancedError;
   }
 }
-
+/*
 export async function createLoan(payload) {
   const idToken = await getIdToken();
   const res = await fetch("/api/coinrabbit/create", {
@@ -93,6 +109,16 @@ export async function createLoan(payload) {
   }
   if (!res.ok) throw new Error(json?.error || text);
   return json;
+}*/
+
+export async function createLoan(payload, opts = {}) {
+  return fetchJSON("/create", {
+    method: "POST",
+    auth: true,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    ...opts,
+  });
 }
 export function getLoanById(id) {
   return fetchJSON(`/loans/${id}`);

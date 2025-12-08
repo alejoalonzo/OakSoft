@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import UserDisplay from "./UserDisplay";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -74,7 +75,10 @@ export default function Navigation() {
           </div>
 
           {/* Buttons + Dropdown wrapped in the same ref */}
-          <div className="flex items-center" ref={menuRef}>
+          <div className="flex items-center gap-3" ref={menuRef}>
+            {/* User Display */}
+            <UserDisplay />
+            
             {/* Desktop Button */}
             <button
               type="button"
@@ -231,7 +235,7 @@ export default function Navigation() {
                   <Link
                     href="/loans"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`block transition-colors uppercase mr-10 md:mr-36 cursor-pointer ${
+                    className={`block transition-colors uppercase mb-4 mr-10 md:mr-36 cursor-pointer ${
                       isActive("/loans")
                         ? "text-primary-500"
                         : "text-white hover:text-primary-500"
@@ -246,6 +250,25 @@ export default function Navigation() {
                     }}
                   >
                     Loans
+                  </Link>
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`block transition-colors uppercase mr-10 md:mr-36 cursor-pointer ${
+                      isActive("/login")
+                        ? "text-primary-500"
+                        : "text-white hover:text-primary-500"
+                    }`}
+                    style={{
+                      fontFamily: "var(--font-abhaya-libre), serif",
+                      fontWeight: 800,
+                      fontSize: "18px",
+                      lineHeight: "18px",
+                      letterSpacing: "2.7px",
+                      textAlign: "right",
+                    }}
+                  >
+                    Login
                   </Link>
                 </div>
               </div>
