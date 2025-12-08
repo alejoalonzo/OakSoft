@@ -3,8 +3,9 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { requireUser } from "@/app/api/_utils/auth";
 import { ensureCoinrabbitUserToken } from "@/app/api/_utils/coinrabbitUser";
+import { saveCoinrabbitLoan } from "@/app/api/_utils/coinrabbitCreate";
 
-const API = process.env.COINRABBIT_BASE_URL; // https://api.coinrabbit.io/v2
+const API = process.env.COINRABBIT_BASE_URL;
 const KEY = process.env.COINRABBIT_API_KEY;
 
 export async function POST(req) {
@@ -43,6 +44,12 @@ export async function POST(req) {
       data = JSON.parse(text);
     } catch {
       data = { raw: text };
+    }
+
+    // Only CoinRabbit responded OK (HELPER CREATE LOAN )
+
+    if (r.ok) {
+      await saveCoinrabbitLoan({ uid, data, payload });
     }
 
     return NextResponse.json(data, { status: r.ok ? 200 : r.status });

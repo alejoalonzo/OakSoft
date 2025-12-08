@@ -1,3 +1,4 @@
+// /app/api/_utils/coinrabbitUser.js
 import { adminDB } from "@/lib/firebaseAdmin";
 
 const API = process.env.COINRABBIT_BASE_URL;

@@ -1,13 +1,31 @@
-// features/loan/ui/ConfirmLoanModal.jsx
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { fmt } from "../utils/formatting";
+import { validateAddressForLoan } from "../utils/addressValidation";
 
 export default function ConfirmLoanModal({ open, onClose, loan, summary }) {
+  const [address, setAddress] = useState("");
+  const [addressError, setAddressError] = useState("");
+
   if (!open) return null;
 
   const hasSummary = !!summary;
+
+  const handleAddressChange = (e) => {
+    const value = e.target.value;
+    setAddress(value);
+
+    const result = validateAddressForLoan(
+      value,
+      summary?.borrowCode,
+      summary?.borrowNetwork
+    );
+
+    setAddressError(result.valid ? "" : result.error);
+  };
+
+  const isAddressValid = !!address && !addressError;
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -16,7 +34,7 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary }) {
 
         {hasSummary ? (
           <>
-            {/* Parte superior: colateral -> préstamo */}
+            {/* Top collateral -> loan */}
             <div className="bg-gray-100 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <div className="text-xs font-semibold text-gray-500">
@@ -44,7 +62,7 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary }) {
               </div>
             </div>
 
-            {/* Detalles numéricos */}
+            {/* Numeric details */}
             <div className="grid grid-cols-2 gap-4 text-sm mb-4">
               <div>
                 <div className="text-gray-500 text-xs">Loan-to-Value</div>
@@ -60,7 +78,9 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary }) {
                 <div className="text-gray-500 text-xs">Monthly interest</div>
                 <div className="font-semibold">
                   {summary.monthlyInterest
-                    ? `${fmt(summary.monthlyInterest, 6)} ${summary.borrowCode}`
+                    ? `${fmt(summary.monthlyInterest, 6)} ${
+                        summary.borrowCode
+                      }`
                     : "-"}
                 </div>
               </div>
@@ -83,6 +103,36 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary }) {
                 </div>
               </div>
             </div>
+
+            {/* Address input with validation (layer 1) */}
+            <div className="mt-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Payout address
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                We will send{" "}
+                <span className="font-semibold">{summary.borrowCode}</span>{" "}
+                {summary.borrowNetwork && (
+                  <>
+                    on{" "}
+                    <span className="font-semibold">
+                      {summary.borrowNetwork}
+                    </span>{" "}
+                  </>
+                )}
+                to this address.
+              </p>
+              <input
+                type="text"
+                value={address}
+                onChange={handleAddressChange}
+                placeholder="Wallet address"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {addressError && (
+                <p className="mt-1 text-xs text-red-500">{addressError}</p>
+              )}
+            </div>
           </>
         ) : (
           <p className="text-sm text-gray-600 mb-4">
@@ -90,9 +140,9 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary }) {
           </p>
         )}
 
-        {/* Debug opcional: ver JSON completo del loan */}
+        {/* Debug JSON (optional) */}
         {loan && (
-          <details className="mt-2 mb-4">
+          <details className="mt-3 mb-4">
             <summary className="text-xs text-gray-500 cursor-pointer">
               Show raw loan JSON (debug)
             </summary>
@@ -102,6 +152,7 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary }) {
           </details>
         )}
 
+        {/* Buttons */}
         <div className="flex justify-end gap-3 mt-4">
           <button
             className="px-4 py-2 text-sm rounded-lg border border-gray-300"
@@ -109,17 +160,19 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary }) {
           >
             Cancel
           </button>
-
-          {/* De momento sin lógica, lo activamos en el siguiente paso */}
           <button
             className="px-5 py-2 text-sm rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-60"
-            disabled
+            disabled={!isAddressValid}
+            onClick={() => {
+              if (!isAddressValid) return;
+              console.log("Address OK (layer 1):", address);
+              // aquí luego enchufamos onConfirm(address) para la capa 2
+            }}
           >
-            Confirm (soon)
+            Confirm
           </button>
         </div>
       </div>
     </div>
   );
 }
-
