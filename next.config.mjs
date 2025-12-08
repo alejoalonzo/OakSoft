@@ -21,6 +21,15 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["@relayprotocol/relay-kit-ui"],
   },
+  webpack: (config, { webpack }) => {
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /test/,
+        contextRegExp: /thread-stream/,
+      })
+    );
+    return config;
+  },
 };
 
 export default nextConfig;
