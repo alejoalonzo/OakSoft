@@ -25,7 +25,7 @@
     "firebase": "^12.5.0",
     "firebase-admin": "^13.6.0",
     "multicoin-address-validator": "^0.5.26",
-    "next": "15.5.4",
+    "next": "^16.0.7",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "viem": "^2.38.3",
@@ -36,7 +36,7 @@
     "@tailwindcss/postcss": "^4",
     "@types/multicoin-address-validator": "^0.5.3",
     "eslint": "^9",
-    "eslint-config-next": "15.5.4",
+    "eslint-config-next": "^16.0.7",
     "tailwindcss": "^4"
   }
 }
