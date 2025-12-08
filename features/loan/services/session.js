@@ -1,9 +1,12 @@
 import { auth } from "@/lib/firebaseClient";
-import { signInAnonymously } from "firebase/auth";
 
 export async function getIdToken() {
   try {
-    if (!auth.currentUser) await signInAnonymously(auth);
+    // Do not signInAnonymously - require that the user is logged in
+    if (!auth.currentUser) {
+      throw new Error("No logged in user - please sign in");
+    }
+
     return await auth.currentUser.getIdToken(true);
   } catch (e) {
     // Firebase Auth errors have code and message properties

@@ -54,10 +54,16 @@ export default function LoanWidget() {
   const handleGetLoanClick = async () => {
     try {
       await handleCreate();   // only wait for creation
-      setShowConfirm(true);   // always open the modal if no error
+      setShowConfirm(true);   // only open modal if successful
     } catch (e) {
-      console.error(e);
-      // toast or something here
+      console.error("Failed to create loan:", e);
+      // Check if it's an authentication error
+      if (e.message?.includes("No logged in user") || e.message?.includes("401")) {
+        alert("Please log in to create a loan");
+        window.location.href = "/login";
+      } else {
+        alert(e.message || "Failed to create loan. Please try again.");
+      }
     }
   };
 

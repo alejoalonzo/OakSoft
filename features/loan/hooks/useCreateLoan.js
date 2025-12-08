@@ -15,10 +15,10 @@ export default function useCreateLoan({
   const [lastLoan, setLastLoan] = useState(null); // debug
 
   const handleCreate = async () => {
-    try {
-      setCreateErr(null);
-      setCreating(true);
+    setCreateErr(null);
+    setCreating(true);
 
+    try {
       if (!selectedCollateral || !selectedBorrow || !amount) {
         throw new Error("Missing data");
       }
@@ -45,8 +45,10 @@ export default function useCreateLoan({
       const res = await createLoanService(payload);
       setLastLoan(res);
       console.log("CREATE LOAN FROM HOOK >>>", res);
+      return res;
     } catch (e) {
       setCreateErr(e.message || "Create failed");
+      throw e; // Re-throw so the parent component can handle it
     } finally {
       setCreating(false);
     }
