@@ -3,10 +3,14 @@
 import React, { useState } from "react";
 import { fmt } from "../utils/formatting";
 import { validateAddressForLoan } from "../utils/addressValidation";
+import { confirmLoan } from "../services/coinrabbit";
 
-export default function ConfirmLoanModal({ open, onClose, loan, summary }) {
+
+export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfirmed }) {
   const [address, setAddress] = useState("");
   const [addressError, setAddressError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   if (!open) return null;
 
@@ -26,6 +30,31 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary }) {
   };
 
   const isAddressValid = !!address && !addressError;
+
+  const loanId =
+    summary?.loanId ??
+    loan?.response?.id ??
+    loan?.response?.loan_id ??
+    loan?.response?.loan?.id ??
+    loan?.id ??
+    null;
+
+  const handleConfirm = async () => {
+    if (!isAddressValid || !loanId) return;
+
+    setSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const res = await confirmLoan(loanId, address);
+      onConfirmed?.(res);
+
+    } catch (err) {
+      setSubmitError(err?.message || "Confirm failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -162,14 +191,10 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary }) {
           </button>
           <button
             className="px-5 py-2 text-sm rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-60"
-            disabled={!isAddressValid}
-            onClick={() => {
-              if (!isAddressValid) return;
-              console.log("Address OK (layer 1):", address);
-              // aquí luego enchufamos onConfirm(address) para la capa 2
-            }}
+            disabled={!isAddressValid || !loanId || submitting}
+            onClick={handleConfirm}
           >
-            Confirm
+            {submitting ? "Confirming..." : "Confirm"}
           </button>
         </div>
       </div>

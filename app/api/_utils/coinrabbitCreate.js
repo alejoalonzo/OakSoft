@@ -2,6 +2,10 @@
 import { adminDB } from "@/lib/firebaseAdmin";
 
 export async function saveCoinrabbitLoan({ uid, data, payload }) {
+  console.log(">>> saveCoinrabbitLoan START");
+  console.log("UID:", uid);
+  console.log("DATA keys:", Object.keys(data || {}));
+
   const loanId =
     data?.response?.id ??
     data?.response?.loan_id ??
@@ -9,13 +13,14 @@ export async function saveCoinrabbitLoan({ uid, data, payload }) {
     data?.id ??
     null;
 
-  if (!loanId) return null;
+  console.log("Extracted loanId:", loanId);
 
-  const ref = adminDB
-    .collection("coinrabbit_users")
-    .doc(uid)
-    .collection("loans")
-    .doc(String(loanId));
+  if (!loanId) {
+    console.error("!!! NO LOAN ID FOUND in response data");
+    return null;
+  }
+
+  const ref = adminDB.collection("loans").doc(String(loanId));
 
   await ref.set(
     {

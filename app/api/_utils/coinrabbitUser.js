@@ -5,6 +5,10 @@ const API = process.env.COINRABBIT_BASE_URL;
 const KEY = process.env.COINRABBIT_API_KEY;
 
 export async function ensureCoinrabbitUserToken(uid) {
+  if (!API || !KEY) {
+    throw new Error("Missing COINRABBIT_BASE_URL or COINRABBIT_API_KEY");
+  }
+
   const docRef = adminDB.collection("coinrabbit_users").doc(uid);
   const snap = await docRef.get();
 

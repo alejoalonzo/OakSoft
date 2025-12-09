@@ -89,27 +89,6 @@ export async function getEstimate(params, opts = {}) {
     throw enhancedError;
   }
 }
-/*
-export async function createLoan(payload) {
-  const idToken = await getIdToken();
-  const res = await fetch("/api/coinrabbit/create", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${idToken}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  const text = await res.text();
-  let json;
-  try {
-    json = JSON.parse(text);
-  } catch {
-    json = { raw: text };
-  }
-  if (!res.ok) throw new Error(json?.error || text);
-  return json;
-}*/
 
 export async function createLoan(payload, opts = {}) {
   return fetchJSON("/create", {
@@ -120,10 +99,16 @@ export async function createLoan(payload, opts = {}) {
     ...opts,
   });
 }
-export function getLoanById(id) {
-  return fetchJSON(`/loans/${id}`);
-}
 
-export function liquidateLoan(id) {
-  return fetchJSON(`/loans/${id}/liquidate`, { method: "POST" });
+export async function confirmLoan(loanId, payoutAddress, opts = {}) {
+  if (!loanId) throw new Error("confirmLoan requires loanId");
+  if (!payoutAddress) throw new Error("confirmLoan requires payoutAddress");
+
+  return fetchJSON(`/confirm/${loanId}`, {
+    method: "POST",
+    auth: true,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ payoutAddress }),
+    ...opts,
+  });
 }
