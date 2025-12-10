@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { getIdToken } from "@/features/loan/services/session";
-
+// Test component to create a loan via CoinRabbit API
 export default function CreateLoanTest() {
   const [out, setOut] = useState(null);
   const [err, setErr] = useState(null);
