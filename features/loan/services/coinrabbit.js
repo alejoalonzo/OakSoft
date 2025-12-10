@@ -112,3 +112,13 @@ export async function confirmLoan(loanId, payoutAddress, opts = {}) {
     ...opts,
   });
 }
+
+export async function getLoanById(loanId, opts = {}) {
+  if (!loanId) throw new Error("getLoanById requires loanId");
+
+  return fetchJSON(`/loans/${loanId}`, {
+    method: "GET",
+    auth: true,
+    ...opts,
+  });
+}

@@ -1,20 +1,68 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { fmt } from "../utils/formatting";
 import { validateAddressForLoan } from "../utils/addressValidation";
-import { confirmLoan } from "../services/coinrabbit";
+import { confirmLoan, getLoanById } from "../services/coinrabbit";
 
-
-export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfirmed }) {
+export default function ConfirmLoanModal({
+  open,
+  onClose,
+  loan,
+  summary,
+  onConfirmed,
+}) {
   const [address, setAddress] = useState("");
   const [addressError, setAddressError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  if (!open) return null;
+  // NEW: fresh loan state
+  const [freshLoan, setFreshLoan] = useState(null);
+  const [loadingFresh, setLoadingFresh] = useState(false);
+  const [freshError, setFreshError] = useState("");
 
   const hasSummary = !!summary;
+
+  const loanId = useMemo(
+    () =>
+      summary?.loanId ??
+      loan?.response?.id ??
+      loan?.response?.loan_id ??
+      loan?.response?.loan?.id ??
+      loan?.id ??
+      null,
+    [summary, loan]
+  );
+
+  const effectiveLoan = freshLoan ?? loan;
+
+  // Load loan when modal opens
+  useEffect(() => {
+    if (!open || !loanId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      setLoadingFresh(true);
+      setFreshError("");
+      try {
+        const data = await getLoanById(loanId);
+        if (!cancelled) setFreshLoan(data);
+      } catch (e) {
+        if (!cancelled) setFreshError(e?.message || "Get loan failed");
+      } finally {
+        if (!cancelled) setLoadingFresh(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, loanId]);
+
+  // Safe early return AFTER hooks
+  if (!open) return null;
 
   const handleAddressChange = (e) => {
     const value = e.target.value;
@@ -31,14 +79,6 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
 
   const isAddressValid = !!address && !addressError;
 
-  const loanId =
-    summary?.loanId ??
-    loan?.response?.id ??
-    loan?.response?.loan_id ??
-    loan?.response?.loan?.id ??
-    loan?.id ??
-    null;
-
   const handleConfirm = async () => {
     if (!isAddressValid || !loanId) return;
 
@@ -49,6 +89,11 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
       const res = await confirmLoan(loanId, address);
       onConfirmed?.(res);
 
+      // Refresh status after confirmation
+      try {
+        const data = await getLoanById(loanId);
+        setFreshLoan(data);
+      } catch (_) {}
     } catch (err) {
       setSubmitError(err?.message || "Confirm failed");
     } finally {
@@ -59,7 +104,20 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-lg w-full text-gray-900 shadow-2xl">
-        <h2 className="text-2xl font-bold mb-6">Confirm your loan</h2>
+        <h2 className="text-2xl font-bold mb-2">Confirm your loan</h2>
+
+        {/* NEW: feedback de refresh */}
+        {loadingFresh && (
+          <p className="text-xs text-gray-500 mb-2">
+            Refreshing loan status...
+          </p>
+        )}
+        {freshError && (
+          <p className="text-xs text-red-500 mb-2">{freshError}</p>
+        )}
+        {submitError && (
+          <p className="text-xs text-red-500 mb-2">{submitError}</p>
+        )}
 
         {hasSummary ? (
           <>
@@ -99,17 +157,13 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
               </div>
               <div>
                 <div className="text-gray-500 text-xs">APR</div>
-                <div className="font-semibold">
-                  {fmt(summary.apr, 2)}%
-                </div>
+                <div className="font-semibold">{fmt(summary.apr, 2)}%</div>
               </div>
               <div>
                 <div className="text-gray-500 text-xs">Monthly interest</div>
                 <div className="font-semibold">
                   {summary.monthlyInterest
-                    ? `${fmt(summary.monthlyInterest, 6)} ${
-                        summary.borrowCode
-                      }`
+                    ? `${fmt(summary.monthlyInterest, 6)} ${summary.borrowCode}`
                     : "-"}
                 </div>
               </div>
@@ -170,13 +224,13 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
         )}
 
         {/* Debug JSON (optional) */}
-        {loan && (
+        {effectiveLoan && (
           <details className="mt-3 mb-4">
             <summary className="text-xs text-gray-500 cursor-pointer">
               Show raw loan JSON (debug)
             </summary>
             <pre className="text-[10px] bg-gray-100 p-3 rounded-md overflow-x-auto max-h-40 mt-2">
-              {JSON.stringify(loan, null, 2)}
+              {JSON.stringify(effectiveLoan, null, 2)}
             </pre>
           </details>
         )}

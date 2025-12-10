@@ -3,23 +3,20 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { requireUser } from "@/app/api/_utils/auth";
 import { ensureCoinrabbitUserToken } from "@/app/api/_utils/coinrabbitUser";
-import { confirmLoanLive } from "@/app/api/_utils/confirm/live";
-import { confirmLoanMock } from "@/app/api/_utils/confirm/mock";
+import { getLoanByIdLive } from "@/app/api/_utils/getLoan/live";
+import { getLoanByIdMock } from "@/app/api/_utils/getLoan/mock";
 import { adminDB } from "@/lib/firebaseAdmin";
 
-const confirmMode = process.env.COINRABBIT_CONFIRM_MODE ?? "live";
-const isMockConfirm = confirmMode === "mock";
+const getLoanMode = process.env.COINRABBIT_GET_LOAN_MODE ?? "live";
+const isMockGetLoan = getLoanMode === "mock";
 
-export async function POST(req, { params }) {
+export async function GET(req, { params }) {
   try {
     // 1) Auth of the app
     const uid = await requireUser(req);
 
     // 2) loanId from URL
     const { id: loanId } = await params;
-
-    // 3) data from front
-    const { payoutAddress } = await req.json();
 
     if (!loanId) {
       return NextResponse.json(
@@ -28,14 +25,7 @@ export async function POST(req, { params }) {
       );
     }
 
-    if (!payoutAddress) {
-      return NextResponse.json(
-        { error: "Missing payoutAddress" },
-        { status: 400 }
-      );
-    }
-
-    // 4) security: check ownership in Firestore
+    // 3) security: check ownership in Firestore
     const loanRef = adminDB.collection("loans").doc(loanId);
     const snap = await loanRef.get();
 
@@ -43,25 +33,24 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // 5) Token CoinRabbit (mock no need real)
-    const xUserToken = isMockConfirm
+    // 4) Token CoinRabbit (mock no need real)
+    const xUserToken = isMockGetLoan
       ? "mock-token"
       : await ensureCoinrabbitUserToken(uid);
 
-    // 6) Execute implementation
-    const impl = isMockConfirm ? confirmLoanMock : confirmLoanLive;
+    // 5) Execute implementation
+    const impl = isMockGetLoan ? getLoanByIdMock : getLoanByIdLive;
 
     const { ok, status, data } = await impl({
       loanId,
-      payoutAddress,
       xUserToken,
     });
 
     return NextResponse.json(data, { status: ok ? 200 : status });
   } catch (e) {
-    console.error("Confirm loan error:", e);
+    console.error("Get loan by id error:", e);
     return NextResponse.json(
-      { error: e?.message || "Confirm loan failed" },
+      { error: e?.message || "Get loan by id failed" },
       { status: 500 }
     );
   }
