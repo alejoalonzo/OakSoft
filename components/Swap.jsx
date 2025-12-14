@@ -1,20 +1,116 @@
 // components/Swap.jsx
 "use client";
 
-import { LiFiWidget  } from "@lifi/widget";
-import { useWidgetEvents, WidgetEvent } from "@lifi/widget";
-import { getToken } from "@lifi/sdk"; // <- to get Symbol, Name, etc.
 import { useEffect, useMemo, useCallback, memo, useState } from "react";
 import dynamic from "next/dynamic";
+import { useWidgetEvents, WidgetEvent } from "@lifi/widget";
+import { getToken } from "@lifi/sdk";
+import { useAppKit } from "@reown/appkit/react";
 
+// Read WalletConnect projectId (AppKit / WC)
+// Prefer Reown's NEXT_PUBLIC_PROJECT_ID, fallback to old NEXT_PUBLIC_WALLETCONNECT_ID if present
+const walletConnectProjectId =
+  process.env.NEXT_PUBLIC_PROJECT_ID || process.env.NEXT_PUBLIC_WALLETCONNECT_ID;
 
-export const WidgetPage = () => {
-  return (
-    <LiFiWidget integrator="Your dApp/company name" config={widgetConfig} />
-  );
+// Base widget config (no hooks here)
+const BASE_WIDGET_CONFIG = {
+  variant: "wide",
+  subvariant: "swap",
+  subvariantOptions: {
+    wide: {
+      enableChainSidebar: true,
+    },
+  },
+  appearance: "dark",
+  hiddenUI: ["poweredBy"], // Hides "Powered by LI.FI"
+  theme: {
+    palette: {
+      mode: "dark",
+      primary: { main: "#95E100" },
+      secondary: { main: "#FFFFFF" },
+      text: {
+        primary: "#FFFFFF",
+        secondary: "#CCCCCC",
+      },
+      background: {
+        paper: "#1F2937",
+        default: "#111827",
+      },
+    },
+    shape: {
+      borderRadius: 12,
+      borderRadiusSecondary: 8,
+    },
+    container: {
+      border: "none",
+      borderRadius: "12px",
+      background: "transparent",
+      padding: "0px",
+    },
+    components: {
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            backgroundColor: "transparent",
+            color: "#FFFFFF",
+            "& .MuiButton-root": { color: "#FFFFFF" },
+            "& .MuiButton-outlined": {
+              color: "#FFFFFF",
+              borderColor: "rgba(255,255,255,0.28)",
+            },
+            "& .MuiChip-root": {
+              color: "#FFFFFF",
+              backgroundColor: "rgba(255,255,255,0.08)",
+              borderColor: "rgba(255,255,255,0.24)",
+            },
+            "& .MuiSvgIcon-root, & .MuiTypography-root": { color: "#FFFFFF" },
+          },
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: "none",
+            fontWeight: 600,
+            borderRadius: 10,
+          },
+          containedPrimary: {
+            backgroundColor: "#95E100",
+            color: "#0B1220",
+            "&:hover": { backgroundColor: "#7AB800" },
+          },
+          outlined: {
+            color: "#FFFFFF",
+            borderColor: "rgba(255,255,255,0.25)",
+            "&:hover": { borderColor: "rgba(255,255,255,0.45)" },
+          },
+          text: {
+            color: "#FFFFFF",
+          },
+        },
+      },
+    },
+  },
 };
 
-const WidgetEventBridge = memo(function WidgetEventBridge({ onSellTokenChange, onBuyTokenChange }) {
+// Dynamic import to avoid SSR issues with the widget
+const DynamicLiFiWidget = dynamic(
+  () => import("@lifi/widget").then((mod) => mod.LiFiWidget),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-[400px] bg-gray-800 rounded-xl border border-white/10 flex items-center justify-center">
+        <div className="text-white">Loading widget...</div>
+      </div>
+    ),
+  }
+);
+
+// Bridge between widget events and your app state
+const WidgetEventBridge = memo(function WidgetEventBridge({
+  onSellTokenChange,
+  onBuyTokenChange,
+}) {
   const widgetEvents = useWidgetEvents();
 
   useEffect(() => {
@@ -32,8 +128,8 @@ const WidgetEventBridge = memo(function WidgetEventBridge({ onSellTokenChange, o
         });
 
         const payload = {
-          symbol,                            // normalized
-          name,                              // <- NEW
+          symbol,
+          name,
           address: tok?.address || tokenAddress || null,
           chainId: tok?.chainId || chainId || 1,
         };
@@ -49,7 +145,7 @@ const WidgetEventBridge = memo(function WidgetEventBridge({ onSellTokenChange, o
 
         const payload = {
           symbol: null,
-          name: null,                        // <- NEW
+          name: null,
           address: tokenAddress || null,
           chainId: chainId || 1,
         };
@@ -57,141 +153,51 @@ const WidgetEventBridge = memo(function WidgetEventBridge({ onSellTokenChange, o
       }
     };
 
-
     const onSource = (p) => fetchAndEmit("SOURCE", p);
     const onDest = (p) => fetchAndEmit("DEST", p);
 
-    // === Events ===
     widgetEvents.on(WidgetEvent.SourceChainTokenSelected, onSource);
     widgetEvents.on(WidgetEvent.DestinationChainTokenSelected, onDest);
 
-    // Cleanup
     return () => widgetEvents.all.clear();
   }, [widgetEvents, onSellTokenChange, onBuyTokenChange]);
 
   return null;
 });
 
-// Get projectId from environment
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID;
-
-// Define widget config outside component to prevent recreation
-const WIDGET_CONFIG = {
-  variant: "wide",
-  subvariant: "swap", 
-  // subvariantOptions: { split: "swap" },
-  subvariantOptions: {
-    wide: {
-      enableChainSidebar: true,
-    }
-  },
-  appearance: "dark",
-  hiddenUI: ['poweredBy'], // This hides the "Powered by LI.FI" branding
-  theme: {
-    palette: {
-      mode: 'dark',
-      primary: { main: '#95E100' },
-      secondary: { main: '#FFFFFF' },
-      text: {
-        primary: '#FFFFFF',
-        secondary: '#CCCCCC',
-      },
-      background: {
-        paper: '#1F2937',
-        default: '#111827',
-      },
-    },
-    shape: {
-      borderRadius: 12,
-      borderRadiusSecondary: 8,
-    },
-    container: { 
-      border: "none", 
-      borderRadius: "12px",
-      background: "transparent",
-      padding: "0px"
-    },
-    components: {
-      MuiAppBar: {
-          styleOverrides: {
-            root: {
-              backgroundColor: 'transparent',
-              color: '#FFFFFF',                     
-              // Force white color on all inner elements
-              '& .MuiButton-root': { color: '#FFFFFF' },  // "Connect wallet" (variant text/outlined)
-              '& .MuiButton-outlined': {
-                color: '#FFFFFF',
-                borderColor: 'rgba(255,255,255,0.28)',
-              },
-              '& .MuiChip-root': {                        // address when connected
-                color: '#FFFFFF',
-                backgroundColor: 'rgba(255,255,255,0.08)',
-                borderColor: 'rgba(255,255,255,0.24)',
-              },
-              '& .MuiSvgIcon-root, & .MuiTypography-root': { color: '#FFFFFF' },
-            },
-          },
-        },
-      MuiButton: {
-        styleOverrides: {
-          // common styles for all buttons
-          root: {
-            textTransform: 'none',
-            fontWeight: 600,
-            borderRadius: 10,
-          },
-
-          // Call-to-action buttons (CTA) -> green with dark text (legible)
-          containedPrimary: {
-            backgroundColor: '#95E100',
-            color: '#0B1220',
-            '&:hover': { backgroundColor: '#7AB800' },
-          },
-
-          // Header "Connect wallet" (usually outlined or text) -> light text
-          outlined: {
-            color: '#FFFFFF',
-            borderColor: 'rgba(255,255,255,0.25)',
-            '&:hover': { borderColor: 'rgba(255,255,255,0.45)' },
-          },
-          text: {
-            color: '#FFFFFF',
-          },
-        },
-      },
-      
-    }
-  },
-  // Clean wallet configuration - no conflicts since no Wagmi
-  walletConfig: {
-    autoConnect: false,
-    // Pass WalletConnect projectId
-    walletConnect: projectId ? {
-      projectId: projectId,
-    } : undefined,
-  }
-};
-
-// Create a dynamic import to prevent SSR issues
-const DynamicLiFiWidget = dynamic(
-  () => import("@lifi/widget").then((mod) => mod.LiFiWidget),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="w-full h-[400px] bg-gray-800 rounded-xl border border-white/10 flex items-center justify-center">
-        <div className="text-white">Loading widget...</div>
-      </div>
-    )
-  }
-);
-
-// Wrapper component with better error handling
+// Wrapper that builds the final widget config using AppKit + partial wallet management
 const LiFiWidgetWrapper = memo(function LiFiWidgetWrapper() {
   const [isClient, setIsClient] = useState(false);
+  const { open } = useAppKit();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const config = useMemo(() => {
+    return {
+      ...BASE_WIDGET_CONFIG,
+      walletConfig: {
+        // When user clicks "Connect wallet" inside the widget,
+        // open the Reown AppKit modal instead of the internal wallet menu
+        onConnect() {
+          open?.({ view: "Connect", namespace: "eip155" });
+        },
+
+        // Hybrid mode:
+        // - EVM: uses external wallet management (AppKit/Wagmi, auto-detected)
+        // - Other ecosystems (e.g. Solana, Bitcoin): internal widget wallet menu
+        // See: Wallet Management > Partial Wallet Management
+        // https://docs.li.fi/widget/wallet-management
+        usePartialWalletManagement: true,
+
+        // WalletConnect config for the widget's internal WalletConnect usage
+        walletConnect: walletConnectProjectId
+          ? { projectId: walletConnectProjectId }
+          : undefined,
+      },
+    };
+  }, [open]);
 
   if (!isClient) {
     return (
@@ -202,24 +208,17 @@ const LiFiWidgetWrapper = memo(function LiFiWidgetWrapper() {
   }
 
   return (
-    <DynamicLiFiWidget 
-      integrator="OakSoft DeFi" 
-      config={WIDGET_CONFIG}
-    />
+    <DynamicLiFiWidget integrator="OakSoft DeFi" config={config} />
   );
 });
 
 export default function SwapColumn({ onSellTokenChange, onBuyTokenChange }) {
-
   return (
     <div className="bg-gray-800 rounded-xl border border-white/10 overflow-hidden">
-      {/* Event Listener */}
       <WidgetEventBridge
         onSellTokenChange={onSellTokenChange}
         onBuyTokenChange={onBuyTokenChange}
       />
-
-      {/* Widget LI.FI */}
       <LiFiWidgetWrapper />
     </div>
   );
