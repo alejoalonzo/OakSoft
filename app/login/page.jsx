@@ -10,7 +10,7 @@ import { auth } from "@/lib/firebaseClient";
 import { useAuth } from "@/providers/AuthProvider";
 
 export default function LoginPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [error, setError] = useState("");
@@ -85,7 +85,8 @@ export default function LoginPage() {
   }
 
   async function handleLogout() {
-    await signOut(auth);
+    // await signOut(auth);
+     await logout();
   }
 
   return (

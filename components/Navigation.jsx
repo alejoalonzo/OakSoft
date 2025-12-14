@@ -4,11 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import UserDisplay from "./UserDisplay";
+import { AppKitButton } from "@reown/appkit/react";
+import { useAppKitAccount } from "@reown/appkit/react";
+// import WalletBadge from "./WalletBadge";
 
 export default function Navigation() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const { address, isConnected } = useAppKitAccount({ namespace: "eip155" });
 
   const isActive = path => {
     return pathname === path;
@@ -75,19 +79,17 @@ export default function Navigation() {
           </div>
 
           {/* Buttons + Dropdown wrapped in the same ref */}
-          <div className="flex items-center gap-3" ref={menuRef}>
+          <div className="flex items-center gap-3 mr-[43px] mt-[34px] md:mr-[43px] md:mt-[34px]" ref={menuRef}>
             {/* User Display */}
             <UserDisplay />
+            {/* <WalletBadge /> */}
+            <AppKitButton />
             
             {/* Desktop Button */}
             <button
               type="button"
               onClick={toggleMenu}
               className="hidden md:inline-flex flex-col justify-center items-end focus:outline-none cursor-pointer p-3 hover:bg-gray-800/20 rounded-lg transition-colors"
-              style={{
-                marginTop: "34px",
-                marginRight: "43px",
-              }}
               aria-controls="desktop-menu"
               aria-expanded={isMenuOpen}
             >
@@ -140,10 +142,6 @@ export default function Navigation() {
               type="button"
               onClick={toggleMenu}
               className="md:hidden inline-flex flex-col justify-center items-end focus:outline-none cursor-pointer p-3 hover:bg-gray-800/20 rounded-lg transition-colors"
-              style={{
-                marginTop: "22px",
-                marginRight: "24px",
-              }}
               aria-controls="mobile-menu"
               aria-expanded={isMenuOpen}
             >
