@@ -1,9 +1,12 @@
+// app/layout.jsx
 import { Geist, Geist_Mono, Abhaya_Libre } from "next/font/google";
 import "./globals.css";
 import "@relayprotocol/relay-kit-ui/styles.css";
+
 import Navigation from "../components/Navigation";
 import ClientOnly from "../components/ClientOnly";
-import AppProviders from "../providers/AppProviders";
+import AppKitProvider from "../providers/AppKitProvider";
+import { headers } from "next/headers";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({
@@ -21,14 +24,17 @@ export const metadata = {
   description: "Decentralized Finance Platform",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const headersList = await headers();
+  const cookies = headersList.get("cookie");
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${abhayaLibre.variable} antialiased bg-gray-50 dark:bg-gray-900`}
         suppressHydrationWarning={true}
       >
-        <AppProviders>
+        <AppKitProvider cookies={cookies}>
           <ClientOnly
             fallback={
               <nav className="bg-white dark:bg-gray-900 shadow-sm relative">
@@ -53,8 +59,9 @@ export default function RootLayout({ children }) {
           >
             <Navigation />
           </ClientOnly>
+
           <main className="min-h-screen">{children}</main>
-        </AppProviders>
+        </AppKitProvider>
       </body>
     </html>
   );

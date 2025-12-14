@@ -1,6 +1,7 @@
 "use client";
 
 import LoanWidget from "../../components/LoanWidget";
+import ConnectWalletButton from "../../components/ConnectWalletButton";
 
 export default function LoansPage() {
   return (
@@ -75,6 +76,7 @@ export default function LoansPage() {
                   </li>
                 </ul>
               </div>
+              <ConnectWalletButton />
             </div>
           </div>
         </div>
