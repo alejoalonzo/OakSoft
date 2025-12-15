@@ -122,3 +122,30 @@ export async function getLoanById(loanId, opts = {}) {
     ...opts,
   });
 }
+
+// Validate payout address against a specific network using our server proxy.
+// CoinRabbit expects: { address, code, network, tag }
+export async function validateAddress(
+  address,
+  code,
+  network,
+  tag = null,
+  opts = {}
+) {
+  if (!address) throw new Error("validateAddress requires address");
+  if (!code) throw new Error("validateAddress requires code");
+  if (!network) throw new Error("validateAddress requires network");
+
+  return fetchJSON("/validate-address", {
+    method: "POST",
+    auth: true, // required because the API route uses requireUser(req)
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      address: String(address).trim(),
+      code: String(code).trim().toUpperCase(),
+      network: String(network).trim().toUpperCase(),
+      tag: tag == null ? null : String(tag).trim(),
+    }),
+    ...opts,
+  });
+}

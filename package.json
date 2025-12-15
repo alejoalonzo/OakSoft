@@ -26,7 +26,6 @@
     "@web3modal/wagmi": "^5.1.11",
     "firebase": "^12.5.0",
     "firebase-admin": "^13.6.0",
-    "multicoin-address-validator": "^0.5.26",
     "next": "^16.0.7",
     "react": "19.1.0",
     "react-dom": "19.1.0",
