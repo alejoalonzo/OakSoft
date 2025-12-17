@@ -12,9 +12,14 @@ export async function ensureCoinrabbitUserToken(uid) {
   const docRef = adminDB.collection("coinrabbit_users").doc(uid);
   const snap = await docRef.get();
 
-  // 1) If I already have a token saved, return it
-  if (snap.exists && snap.data()?.xUserToken) {
-    return snap.data().xUserToken;
+  // 1) Check if token exists and is not too old (refresh every 3 days)
+  const data = snap.data();
+  const hasToken = snap.exists && data?.xUserToken;
+  const tokenAge = hasToken ? Date.now() - (data.updatedAt || 0) : Infinity;
+  const TOKEN_MAX_AGE = 3 * 24 * 60 * 60 * 1000; // 3 days
+
+  if (hasToken && tokenAge < TOKEN_MAX_AGE) {
+    return data.xUserToken;
   }
 
   // 2) If not, request it again from CoinRabbit

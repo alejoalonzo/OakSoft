@@ -2,15 +2,10 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { fmt } from "../utils/formatting";
-import { confirmLoan, getLoanById, validateAddress } from "../services/coinrabbit";
+import { getLoanById, validateAddress } from "../services/coinrabbit";
+import { useConfirmAndPayCollateral } from "../hooks/useConfirmAndPayCollateral";
 
-export default function ConfirmLoanModal({
-  open,
-  onClose,
-  loan,
-  summary,
-  onConfirmed,
-}) {
+export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfirmed }) {
   const [address, setAddress] = useState("");
   const [addressError, setAddressError] = useState("");
 
@@ -18,10 +13,9 @@ export default function ConfirmLoanModal({
   const [validating, setValidating] = useState(false);
   const [remoteValid, setRemoteValid] = useState(null); // null | true | false
 
-  const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  // NEW: fresh loan state
+  // Fresh loan state
   const [freshLoan, setFreshLoan] = useState(null);
   const [loadingFresh, setLoadingFresh] = useState(false);
   const [freshError, setFreshError] = useState("");
@@ -42,13 +36,16 @@ export default function ConfirmLoanModal({
   const effectiveLoan = freshLoan ?? loan;
 
   // Network to validate against:
-  // Prefer borrowNetwork; fallback to borrowCode (e.g. BTC).
   const payoutNetwork = useMemo(() => {
     const n = summary?.borrowNetwork || summary?.borrowCode || "";
     return String(n).trim().toUpperCase();
   }, [summary?.borrowNetwork, summary?.borrowCode]);
 
-  // Reset input when modal opens/closes (clean UX)
+  // Hook that does: final validate -> confirm -> open wallet -> pay collateral
+  const { run, loading: confirmingOrPaying, txId, error: flowError } =
+    useConfirmAndPayCollateral({ summary, payoutNetwork });
+
+  // Reset input when modal opens
   useEffect(() => {
     if (!open) return;
     setAddress("");
@@ -81,13 +78,12 @@ export default function ConfirmLoanModal({
     };
   }, [open, loanId]);
 
-  // Remote validate address with debounce
+  // Remote validate address with debounce (UX)
   useEffect(() => {
     if (!open) return;
 
     const a = String(address || "").trim();
 
-    // If empty, reset state
     if (!a) {
       setAddressError("");
       setRemoteValid(null);
@@ -95,7 +91,6 @@ export default function ConfirmLoanModal({
       return;
     }
 
-    // If we still don't know network, don't validate yet
     if (!payoutNetwork) return;
 
     const controller = new AbortController();
@@ -105,17 +100,18 @@ export default function ConfirmLoanModal({
       setAddressError("");
 
       try {
-        const res = await validateAddress(a, summary?.borrowCode, payoutNetwork, null, {
-          signal: controller.signal,
-        });
+        const res = await validateAddress(
+          a,
+          summary?.borrowCode,
+          payoutNetwork,
+          null,
+          { signal: controller.signal }
+        );
 
-        // res = { valid: boolean, raw?: any }
         setRemoteValid(!!res?.valid);
         setAddressError(res?.valid ? "" : "Invalid address for this network");
       } catch (err) {
-        // If request was aborted, ignore
         if (controller.signal.aborted) return;
-
         setRemoteValid(false);
         setAddressError("Invalid address for this network");
       } finally {
@@ -129,14 +125,11 @@ export default function ConfirmLoanModal({
     };
   }, [address, payoutNetwork, open, summary?.borrowCode]);
 
-  // Safe early return AFTER hooks
   if (!open) return null;
 
   const handleAddressChange = (e) => {
     const value = e.target.value;
     setAddress(value);
-
-    // Clear errors while typing; remote validator will set them after debounce
     setAddressError("");
     setRemoteValid(null);
   };
@@ -152,38 +145,21 @@ export default function ConfirmLoanModal({
       return;
     }
 
-    // Final validation before confirming (anti-bypass)
     try {
-      setSubmitting(true);
       setSubmitError("");
 
-      const code = summary?.borrowCode;
-      const network = payoutNetwork;
+      const { confirmRes, freshLoan: refreshed } = await run({
+        loanId,
+        payoutAddress: a,
+      });
 
-      if (!code || !network) {
-        // Missing data to validate; block confirmation
-        setSubmitError("Missing payout currency/network to validate address.");
-        setSubmitting(false);
-        return;
-      }
-
-      const check = await validateAddress(a, code, network, null);
-
-
-      const res = await confirmLoan(loanId, a);
-      onConfirmed?.(res);
-
-      // Refresh status after confirmation
-      try {
-        const data = await getLoanById(loanId);
-        setFreshLoan(data);
-      } catch (_) {}
+      onConfirmed?.(confirmRes);
+      if (refreshed) setFreshLoan(refreshed);
     } catch (err) {
       setSubmitError(err?.message || "Confirm failed");
-    } finally {
-      setSubmitting(false);
     }
   };
+
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -194,7 +170,16 @@ export default function ConfirmLoanModal({
           <p className="text-xs text-gray-500 mb-2">Refreshing loan status...</p>
         )}
         {freshError && <p className="text-xs text-red-500 mb-2">{freshError}</p>}
-        {submitError && <p className="text-xs text-red-500 mb-2">{submitError}</p>}
+
+        {(submitError || flowError) && (
+          <p className="text-xs text-red-500 mb-2">{submitError || flowError}</p>
+        )}
+
+        {!!txId && (
+          <p className="text-xs text-green-700 mb-2">
+            Collateral sent. Tx: <span className="font-mono">{txId}</span>
+          </p>
+        )}
 
         {hasSummary ? (
           <>
@@ -271,7 +256,7 @@ export default function ConfirmLoanModal({
                 placeholder="Wallet address"
                 className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-              {/* Status row */}
+
               <div className="mt-1 flex items-center justify-between">
                 <div>
                   {validating && (
@@ -301,15 +286,16 @@ export default function ConfirmLoanModal({
           <button
             className="px-4 py-2 text-sm rounded-lg border border-gray-300"
             onClick={onClose}
+            disabled={confirmingOrPaying}
           >
             Cancel
           </button>
           <button
             className="px-5 py-2 text-sm rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-60"
-            disabled={!isAddressValid || !loanId || submitting}
+            disabled={!isAddressValid || !loanId || confirmingOrPaying}
             onClick={handleConfirm}
           >
-            {submitting ? "Confirming..." : "Confirm"}
+            {confirmingOrPaying ? "Opening wallet..." : "Confirm"}
           </button>
         </div>
       </div>
