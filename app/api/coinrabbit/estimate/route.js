@@ -48,10 +48,13 @@ export async function GET(req) {
     } catch {
       data = { raw: text };
     }
+
+    // If API returned an error, make sure to forward it
+    // In the CoinRabbit format, the error comes with result: false and message
     return NextResponse.json(data, { status: r.ok ? 200 : r.status });
   } catch (err) {
     return NextResponse.json(
-      { result: false, error: err.message },
+      { result: false, message: err.message },
       { status: 500 }
     );
   }

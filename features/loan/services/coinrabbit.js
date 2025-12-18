@@ -82,9 +82,10 @@ export async function getEstimate(params, opts = {}) {
   try {
     return await fetchJSON(`/estimate?${qsStr}`, opts);
   } catch (error) {
-    // Preserve the status for rate limiting checks
-    const enhancedError = new Error(`getEstimate failed: ${error.message}`);
+    // Preserve the original error message from the API and status
+    const enhancedError = new Error(error.message);
     enhancedError.status = error.status;
+    enhancedError.data = error.data;
     enhancedError.originalError = error;
     throw enhancedError;
   }

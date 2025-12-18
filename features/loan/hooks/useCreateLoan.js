@@ -8,6 +8,7 @@ export default function useCreateLoan({
   selectedCollateral,
   selectedBorrow,
   selectedLTV,
+  selectedDuration,
   estimate,
 }) {
   const [creating, setCreating] = useState(false);
@@ -38,6 +39,8 @@ export default function useCreateLoan({
           ...(estimate?.amount_to && {
             expected_amount: String(estimate.amount_to),
           }),
+          // Short term (30 days) uses is_fixed: true, Long term (unlimited) uses is_fixed: false or omit
+          is_fixed: selectedDuration === "short",
         },
         ltv_percent: String(ltvPercent),
       };

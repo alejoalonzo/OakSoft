@@ -4,6 +4,36 @@ import { useEffect, useRef, useState } from "react";
 import { receiveNetworksOf, prioritize } from "../utils/networks";
 import { getEstimate } from "../services/coinrabbit";
 
+/**
+ * Formatea mensajes de error de la API para hacerlos más legibles
+ */
+function formatErrorMessage(message) {
+  if (!message) return "Estimate failed";
+
+  // Detectar mensaje de "calculated amount is less than min amount"
+  const minAmountRegex =
+    /The calculated amount ([\d.]+) (\w+) \[[\w-]+\] is less than min amount ([\d.]+) (\w+) \[[\w-]+\]/i;
+  const match = message.match(minAmountRegex);
+
+  if (match) {
+    const [, calcAmount, currency1, minAmount, currency2] = match;
+    const calc = Number(calcAmount);
+    const min = Number(minAmount);
+
+    // Formatear números: si es mayor a 1, mostrar 2 decimales, si es menor mostrar hasta 6
+    const formatNum = num => {
+      if (num >= 1) return num.toFixed(2);
+      if (num >= 0.01) return num.toFixed(4);
+      return num.toFixed(6);
+    };
+
+    return `Amount ${formatNum(calc)} ${currency1.toUpperCase()} is below minimum of ${formatNum(min)} ${currency2.toUpperCase()}`;
+  }
+
+  // Para otros mensajes, solo limpiar corchetes si existen
+  return message.replace(/\[[\w-]+\]/g, "").trim();
+}
+
 export default function useEstimate({
   amount,
   selectedCollateral,
@@ -111,8 +141,13 @@ export default function useEstimate({
             msg.includes("pair does not exists") ||
             msg.includes("data for currency");
           if (!isPairErr) {
-            setEstErr(j?.message || "Estimate failed");
-            break;
+            // Formatear el mensaje de error para que sea más legible
+            const formattedMsg = formatErrorMessage(
+              j?.message || "Estimate failed"
+            );
+            setEstErr(formattedMsg);
+            setEstLoading(false);
+            return; // Salir completamente, no continuar probando redes
           }
         } catch (e) {
           if (ctrl.signal.aborted) return;
@@ -128,8 +163,13 @@ export default function useEstimate({
             msg.includes("pair does not exists") ||
             msg.includes("data for currency");
           if (!isPairErr) {
-            setEstErr(e?.message || "Estimate failed");
-            break;
+            // Formatear el mensaje de error para que sea más legible
+            const formattedMsg = formatErrorMessage(
+              e?.message || "Estimate failed"
+            );
+            setEstErr(formattedMsg);
+            setEstLoading(false);
+            return; // Salir completamente, no continuar probando redes
           }
           // si es “pair not exists”, sigue con la siguiente red
         }

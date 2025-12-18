@@ -47,6 +47,7 @@ export default function LoanWidget() {
     selectedCollateral,
     selectedBorrow,
     selectedLTV,
+    selectedDuration,
     estimate,
   });
 
@@ -203,6 +204,11 @@ export default function LoanWidget() {
                     <div>
                       <div className="font-bold mb-1">Long Term</div>
                       <div className="text-xs opacity-80">Unlimited time</div>
+                      {estimate && (
+                        <div className="text-xs opacity-70 mt-1">
+                          ~{fmt(estimate.interest_amounts?.year ?? 0, 2)} {selectedBorrow?.code || ""}/year
+                        </div>
+                      )}
                     </div>
                     <div className="text-right">
                       <div className="font-bold mb-1">APR</div>
@@ -225,6 +231,11 @@ export default function LoanWidget() {
                     <div>
                       <div className="font-bold mb-1">Short Term</div>
                       <div className="text-xs opacity-80">30 days</div>
+                      {estimate && (
+                        <div className="text-xs opacity-70 mt-1">
+                          ~{fmt(estimate.interest_amounts?.month ?? 0, 2)} {selectedBorrow?.code || ""}/month
+                        </div>
+                      )}
                     </div>
                     <div className="text-right">
                       <div className="font-bold mb-1">APR</div>
