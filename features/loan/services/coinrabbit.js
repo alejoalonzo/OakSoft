@@ -150,3 +150,14 @@ export async function validateAddress(
     ...opts,
   });
 }
+
+// Update expired deposit transaction
+export async function refreshDepositAddress(loanId, opts = {}) {
+  if (!loanId) throw new Error("refreshDepositAddress requires loanId");
+
+  return fetchJSON(`/deposit/${loanId}`, {
+    method: "POST",
+    auth: true,
+    ...opts,
+  });
+}

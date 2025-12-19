@@ -13,7 +13,7 @@ export default function useCreateLoan({
 }) {
   const [creating, setCreating] = useState(false);
   const [createErr, setCreateErr] = useState(null);
-  const [lastLoan, setLastLoan] = useState(null); // debug
+  const [lastLoan, setLastLoan] = useState(null);
 
   const handleCreate = async () => {
     setCreateErr(null);
@@ -26,6 +26,8 @@ export default function useCreateLoan({
 
       const ltvPercent = Number(selectedLTV) / 100;
 
+      const lifetimeValue = selectedDuration === "long" ? 1 : 0;
+
       const payload = {
         deposit: {
           currency_code: selectedCollateral.code,
@@ -35,23 +37,21 @@ export default function useCreateLoan({
         loan: {
           currency_code: selectedBorrow.code,
           currency_network: selectedBorrow.network,
-          // optionally, use what I got from estimate
           ...(estimate?.amount_to && {
             expected_amount: String(estimate.amount_to),
           }),
-          // Short term (30 days) uses is_fixed: true, Long term (unlimited) uses is_fixed: false or omit
-          is_fixed: selectedDuration === "short",
         },
         ltv_percent: String(ltvPercent),
+
+        lifetime: lifetimeValue,
       };
 
       const res = await createLoanService(payload);
       setLastLoan(res);
-      console.log("CREATE LOAN FROM HOOK >>>", res);
       return res;
     } catch (e) {
       setCreateErr(e.message || "Create failed");
-      throw e; // Re-throw so the parent component can handle it
+      throw e;
     } finally {
       setCreating(false);
     }

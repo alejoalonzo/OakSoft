@@ -50,12 +50,50 @@ export async function POST(req, { params }) {
 
     // 6) Execute implementation
     const impl = isMockConfirm ? confirmLoanMock : confirmLoanLive;
-
     const { ok, status, data } = await impl({
       loanId,
       payoutAddress,
       xUserToken,
     });
+
+    // 7) Persist "latest state" + event log (only if success)
+    if (ok) {
+      const now = Date.now();
+
+      // Try to extract useful fields if they exist in the response
+      const depositAddress =
+        data?.response?.deposit?.send_address ||
+        data?.response?.address || // some endpoints return { address, extraId }
+        null;
+
+      const coinrabbitStatus = data?.response?.status || null;
+
+      // Update main loan doc with the latest known state (merge to avoid overwriting)
+      await loanRef.set(
+        {
+          updatedAt: now,
+          coinrabbit: {
+            lastSyncedAt: now,
+            status: coinrabbitStatus,
+            depositAddress,
+          },
+          confirm: {
+            payoutAddress,
+            confirmedAt: now,
+          },
+        },
+        { merge: true }
+      );
+
+      // Append-only event log (useful for debugging/audit, avoids bloating main doc)
+      await loanRef.collection("events").add({
+        type: "confirm",
+        at: now,
+        payload: { payoutAddress },
+        coinrabbit: data,
+        mode: isMockConfirm ? "mock" : "live",
+      });
+    }
 
     return NextResponse.json(data, { status: ok ? 200 : status });
   } catch (e) {
