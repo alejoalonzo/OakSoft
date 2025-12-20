@@ -20,6 +20,8 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
   const [loadingFresh, setLoadingFresh] = useState(false);
   const [freshError, setFreshError] = useState("");
 
+  const [busyLabel, setBusyLabel] = useState("");
+
   const hasSummary = !!summary;
 
   const loanId = useMemo(
@@ -148,10 +150,17 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
     try {
       setSubmitError("");
 
+      const dep = effectiveLoan?.response?.deposit || {};
+      const needsRefresh = dep?.active === false || !dep?.send_address;
+
+      setBusyLabel(needsRefresh ? "Refreshing deposit address..." : "Opening wallet...");
+
       const { confirmRes, freshLoan: refreshed } = await run({
         loanId,
         payoutAddress: a,
       });
+
+      setBusyLabel(""); // clear when done
 
       onConfirmed?.(confirmRes);
       if (refreshed) setFreshLoan(refreshed);
