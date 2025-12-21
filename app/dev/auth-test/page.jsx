@@ -1,7 +1,9 @@
 "use client";
+
 import { useState } from "react";
 import { getIdToken } from "@/features/loan/services/session";
 import CreateLoanTest from "./CreateLoanTest";
+import LoanStatusLabel from "@/features/loan/ui/LoanStatusLabel";
 
 export default function AuthTest() {
   const [out, setOut] = useState(null);
@@ -16,6 +18,15 @@ export default function AuthTest() {
   const [depositOut, setDepositOut] = useState(null);
   const [depositErr, setDepositErr] = useState(null);
   const [loadingDeposit, setLoadingDeposit] = useState(false);
+
+  const [increaseLoanId, setIncreaseLoanId] = useState("");
+  const [increaseAmount, setIncreaseAmount] = useState("0.001");
+  const [increaseOut, setIncreaseOut] = useState(null);
+  const [increaseErr, setIncreaseErr] = useState(null);
+  const [loadingIncrease, setLoadingIncrease] = useState(false);
+
+  const [listen, setListen] = useState(false);
+  const [listenLoanId, setListenLoanId] = useState("");
 
   const parseResponse = async (r) => {
     const ct = r.headers.get("content-type") || "";
@@ -32,45 +43,6 @@ export default function AuthTest() {
 
     return { status: r.status, ok: r.ok, data };
   };
-
-  function looksExpired(data) {
-    try {
-      const s = JSON.stringify(data).toLowerCase();
-      if (s.includes("expired")) return true;
-
-      // Heuristics for common timestamp keys
-      const now = Date.now();
-      const candidates = ["expires_at", "expired_at", "deadline", "valid_until"];
-
-      const stack = [data];
-      while (stack.length) {
-        const cur = stack.pop();
-        if (!cur || typeof cur !== "object") continue;
-
-        for (const [k, v] of Object.entries(cur)) {
-          const key = String(k).toLowerCase();
-
-          if (candidates.includes(key)) {
-            // number: could be seconds or ms
-            if (typeof v === "number") {
-              const ms = v < 10_000_000_000 ? v * 1000 : v;
-              if (ms > 0 && ms < now) return true;
-            }
-            // string: ISO date
-            if (typeof v === "string") {
-              const t = Date.parse(v);
-              if (!Number.isNaN(t) && t < now) return true;
-            }
-          }
-
-          if (v && typeof v === "object") stack.push(v);
-        }
-      }
-    } catch {
-      // ignore
-    }
-    return false;
-  }
 
   const runAuth = async () => {
     setErr(null);
@@ -106,14 +78,8 @@ export default function AuthTest() {
         headers: { Authorization: "Bearer " + t },
         cache: "no-store",
       });
-
       const res = await parseResponse(r);
-      setLoanOut({
-        ...res,
-        extracted: {
-          expiredGuess: looksExpired(res.data),
-        },
-      });
+      setLoanOut(res);
     } catch (e2) {
       setLoanErr(e2.message);
     } finally {
@@ -158,6 +124,64 @@ export default function AuthTest() {
     }
   };
 
+  const runIncreaseEstimate = async (e) => {
+    e?.preventDefault?.();
+    setIncreaseErr(null);
+    setIncreaseOut(null);
+
+    const id = increaseLoanId.trim();
+    const amount = String(increaseAmount || "").trim();
+
+    if (!id) {
+      setIncreaseErr("Missing loanId");
+      return;
+    }
+    if (!amount) {
+      setIncreaseErr("Missing amount");
+      return;
+    }
+
+    setLoadingIncrease(true);
+    try {
+      const t = await getIdToken();
+      const qs = new URLSearchParams({ amount }).toString();
+
+      const r = await fetch(
+        `/api/coinrabbit/increase/estimate/${encodeURIComponent(id)}?${qs}`,
+        {
+          method: "GET",
+          headers: { Authorization: "Bearer " + t },
+          cache: "no-store",
+        }
+      );
+
+      const res = await parseResponse(r);
+
+      const isSuccess = res?.data?.result === true;
+      const max = isSuccess ? res?.data?.response?.max ?? null : null;
+      const liquidationPrice = isSuccess
+        ? res?.data?.response?.liquidation_price ?? null
+        : null;
+      const precision = isSuccess ? res?.data?.response?.precision ?? null : null;
+
+      setIncreaseOut({
+        ...res,
+        extracted: { isSuccess, max, liquidationPrice, precision, amount },
+      });
+    } catch (e2) {
+      setIncreaseErr(e2.message);
+    } finally {
+      setLoadingIncrease(false);
+    }
+  };
+
+  const boxStyle = {
+    borderTop: "1px solid #ddd",
+    paddingTop: 16,
+    display: "grid",
+    gap: 8,
+  };
+
   return (
     <div style={{ padding: 20, display: "grid", gap: 18, maxWidth: 980 }}>
       <div style={{ display: "grid", gap: 8 }}>
@@ -166,42 +190,51 @@ export default function AuthTest() {
         {err && <pre style={{ color: "red" }}>{err}</pre>}
       </div>
 
-      <div style={{ borderTop: "1px solid #ddd", paddingTop: 16, display: "grid", gap: 8 }}>
-        <h3 style={{ margin: 0 }}>Get loan by id (to find expired)</h3>
+      <div style={boxStyle}>
+        <h3 style={{ margin: 0 }}>Listen loan status (starts only when you click)</h3>
 
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            value={listenLoanId}
+            onChange={(e) => setListenLoanId(e.target.value)}
+            placeholder="Paste loanId to listen"
+            style={{ flex: 1, padding: 10 }}
+          />
+          <button type="button" onClick={() => setListen(true)} disabled={!listenLoanId.trim()}>
+            Start
+          </button>
+          <button type="button" onClick={() => setListen(false)}>
+            Stop
+          </button>
+        </div>
+
+        <LoanStatusLabel loanId={listenLoanId.trim()} start={listen} />
+      </div>
+
+      <div style={boxStyle}>
+        <h3 style={{ margin: 0 }}>Get loan by id</h3>
         <form onSubmit={runGetLoanById} style={{ display: "flex", gap: 8 }}>
           <input
             value={checkLoanId}
             onChange={(e) => setCheckLoanId(e.target.value)}
-            placeholder="Paste loanId (from Firestore) to inspect CoinRabbit status"
+            placeholder="Paste loanId"
             style={{ flex: 1, padding: 10 }}
           />
           <button type="submit" disabled={loadingLoan || !checkLoanId.trim()}>
             {loadingLoan ? "Loading..." : "GetLoanById"}
           </button>
         </form>
-
-        {loanOut?.extracted && (
-          <div style={{ padding: 10, border: "1px solid #ddd", background: "#fafafa" }}>
-            <b>expiredGuess:</b> {String(loanOut.extracted.expiredGuess)}
-            <div style={{ fontSize: 13, color: "#555", marginTop: 6 }}>
-              Tip: busca en el JSON campos como <code>expired</code>, <code>expires_at</code>, <code>deadline</code>.
-            </div>
-          </div>
-        )}
-
         {loanOut && <pre>{JSON.stringify(loanOut, null, 2)}</pre>}
         {loanErr && <pre style={{ color: "red" }}>{loanErr}</pre>}
       </div>
 
-      <div style={{ borderTop: "1px solid #ddd", paddingTop: 16, display: "grid", gap: 8 }}>
+      <div style={boxStyle}>
         <h3 style={{ margin: 0 }}>Refresh deposit address (Update expired deposit transaction)</h3>
-
         <form onSubmit={runRefreshDeposit} style={{ display: "flex", gap: 8 }}>
           <input
             value={refreshLoanId}
             onChange={(e) => setRefreshLoanId(e.target.value)}
-            placeholder="Paste an expired loanId here, then refresh deposit address"
+            placeholder="Paste loanId"
             style={{ flex: 1, padding: 10 }}
           />
           <button type="submit" disabled={loadingDeposit || !refreshLoanId.trim()}>
@@ -222,6 +255,57 @@ export default function AuthTest() {
 
         {depositOut && <pre>{JSON.stringify(depositOut, null, 2)}</pre>}
         {depositErr && <pre style={{ color: "red" }}>{depositErr}</pre>}
+      </div>
+
+      <div style={boxStyle}>
+        <h3 style={{ margin: 0 }}>Get increase estimate</h3>
+
+        <form onSubmit={runIncreaseEstimate} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <input
+            value={increaseLoanId}
+            onChange={(e) => setIncreaseLoanId(e.target.value)}
+            placeholder="Paste loanId"
+            style={{ flex: 1, padding: 10, minWidth: 260 }}
+          />
+
+          <input
+            value={increaseAmount}
+            onChange={(e) => setIncreaseAmount(e.target.value)}
+            placeholder="amount (e.g. 0.001)"
+            style={{ width: 180, padding: 10 }}
+          />
+
+          <button type="submit" disabled={loadingIncrease || !increaseLoanId.trim()}>
+            {loadingIncrease ? "Loading..." : "GetIncreaseEstimate"}
+          </button>
+        </form>
+
+        {increaseOut?.extracted?.isSuccess && (
+          <div style={{ padding: 12, border: "1px solid #ddd", background: "#f3f4f6" }}>
+            <div style={{ marginBottom: 6 }}>
+              <b>amount:</b> {String(increaseOut.extracted?.amount)}
+            </div>
+            <div>
+              <b>max:</b> {String(increaseOut.extracted?.max)}
+            </div>
+            <div>
+              <b>liquidation_price:</b> {String(increaseOut.extracted?.liquidationPrice)}
+            </div>
+            <div>
+              <b>precision:</b> {String(increaseOut.extracted?.precision)}
+            </div>
+          </div>
+        )}
+
+        {increaseOut && !increaseOut?.extracted?.isSuccess && (
+          <div style={{ padding: 12, border: "1px solid #fca5a5", background: "#fef2f2" }}>
+            <b>CoinRabbit error:</b>{" "}
+            {increaseOut?.data?.response?.error || "Unknown error"}
+          </div>
+        )}
+
+        {increaseOut && <pre>{JSON.stringify(increaseOut, null, 2)}</pre>}
+        {increaseErr && <pre style={{ color: "red" }}>{increaseErr}</pre>}
       </div>
 
       <div style={{ borderTop: "1px solid #ddd", paddingTop: 16 }}>

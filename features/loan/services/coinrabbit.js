@@ -161,3 +161,19 @@ export async function refreshDepositAddress(loanId, opts = {}) {
     ...opts,
   });
 }
+
+// Get increase estimate
+export async function getIncreaseEstimate(loanId, amount, opts = {}) {
+  if (!loanId) throw new Error("getIncreaseEstimate requires loanId");
+  if (amount == null || String(amount).trim() === "") {
+    throw new Error("getIncreaseEstimate requires amount");
+  }
+
+  const qs = new URLSearchParams({ amount: String(amount) }).toString();
+
+  return fetchJSON(`/increase/estimate/${loanId}?${qs}`, {
+    method: "GET",
+    auth: true,
+    ...opts,
+  });
+}
