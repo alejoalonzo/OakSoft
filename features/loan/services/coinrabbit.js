@@ -177,3 +177,19 @@ export async function getIncreaseEstimate(loanId, amount, opts = {}) {
     ...opts,
   });
 }
+
+// Create increase tx
+export async function createIncreaseTx(loanId, amount, opts = {}) {
+  if (!loanId) throw new Error("createIncreaseTx requires loanId");
+  if (amount == null || String(amount).trim() === "") {
+    throw new Error("createIncreaseTx requires amount");
+  }
+
+  return fetchJSON(`/increase/${loanId}`, {
+    method: "POST",
+    auth: true,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ deposit: { amount: String(amount).trim() } }),
+    ...opts,
+  });
+}
