@@ -35,7 +35,7 @@ async function fetchJSON(path, opts = {}) {
   }
 
   if (!r.ok) {
-    const e = new Error(j?.message || `HTTP ${r.status}`);
+    const e = new Error(j?.message || j?.error || `HTTP ${r.status}`);
     e.status = r.status;
     e.data = j;
     e.response = r; // Keep the original response for status checks
@@ -190,6 +190,72 @@ export async function createIncreaseTx(loanId, amount, opts = {}) {
     auth: true,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ deposit: { amount: String(amount).trim() } }),
+    ...opts,
+  });
+}
+
+// Save tx if used fallback increased tx
+export async function saveIncreaseFallbackTx(loanId, hash, opts = {}) {
+  if (!loanId) throw new Error("saveIncreaseFallbackTx requires loanId");
+  if (!hash) throw new Error("saveIncreaseFallbackTx requires hash");
+
+  return fetchJSON(`/increase/fallback-tx/${loanId}`, {
+    method: "PUT",
+    auth: true,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ hash: String(hash).trim() }),
+    ...opts,
+  });
+}
+
+// Get Estimate  pledge redemption transaction (close loan / redeem collateral)
+export async function getPledgeEstimate(loanId, params = {}, opts = {}) {
+  if (!loanId) throw new Error("getPledgeEstimate requires loanId");
+  const qs = new URLSearchParams(params).toString();
+  const path = `/pledge-estimate/${loanId}${qs ? `?${qs}` : ""}`;
+
+  return fetchJSON(path, {
+    method: "GET",
+    auth: true,
+    ...opts,
+  });
+}
+
+// Create pledge redemption transaction (close loan / redeem collateral)
+export async function createPledgeRedemptionTx(id, payload, opts = {}) {
+  if (!id) throw new Error("createPledgeRedemptionTx requires id");
+  if (!payload) throw new Error("createPledgeRedemptionTx requires payload");
+
+  const address = String(payload.address || "").trim();
+  const extra_id = payload.extra_id ?? null;
+
+  const receive_from = String(payload.receive_from || "").trim();
+  const repay_by_network = String(payload.repay_by_network || "").trim();
+  const repay_by_code = String(payload.repay_by_code || "").trim();
+  const amount = payload.amount;
+
+  if (!address) throw new Error("createPledgeRedemptionTx missing address");
+  if (!receive_from)
+    throw new Error("createPledgeRedemptionTx missing receive_from");
+  if (!repay_by_network)
+    throw new Error("createPledgeRedemptionTx missing repay_by_network");
+  if (!repay_by_code)
+    throw new Error("createPledgeRedemptionTx missing repay_by_code");
+  if (amount == null)
+    throw new Error("createPledgeRedemptionTx missing amount");
+
+  return fetchJSON(`/pledge/${id}`, {
+    method: "POST",
+    auth: true,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      address,
+      extra_id,
+      receive_from,
+      repay_by_network,
+      repay_by_code,
+      amount,
+    }),
     ...opts,
   });
 }

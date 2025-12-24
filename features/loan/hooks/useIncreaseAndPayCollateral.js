@@ -4,12 +4,14 @@
 // 1) Get increase estimate (requires amount)
 // 2) Create increase tx (returns deposit address)
 // 3) Open wallet and send the extra collateral to that address
-// 4) Optionally refresh loan state
+// 4) If isFallbackTx === true, save tx hash via PUT fallback-tx
+// 5) Optionally refresh loan state
 
 import { useCallback, useState } from "react";
 import {
   getIncreaseEstimate,
   createIncreaseTx,
+  saveIncreaseFallbackTx,
   getLoanById,
 } from "../services/coinrabbit";
 import { useSendCollateral } from "./useSendCollateral";
@@ -32,15 +34,10 @@ function buildFallbackSummaryFromLoan(loanByIdRes) {
   const inc = r?.increase || {};
   const dep = r?.deposit || {};
 
-  const code =
-    inc?.currency_code || dep?.currency_code || r?.deposit?.currency || null;
-
+  const code = inc?.currency_code || dep?.currency_code || null;
   const network = inc?.currency_network || dep?.currency_network || null;
 
-  return {
-    collateralCode: code,
-    collateralNetwork: network,
-  };
+  return { collateralCode: code, collateralNetwork: network };
 }
 
 export function useIncreaseAndPayCollateral({ summary }) {
@@ -63,7 +60,6 @@ export function useIncreaseAndPayCollateral({ summary }) {
       try {
         const amountStr = String(amount).trim();
 
-        // If summary is missing, we fetch loan once to infer chain/code/network
         let localSummary = summary;
         let baseLoan = null;
 
@@ -76,7 +72,7 @@ export function useIncreaseAndPayCollateral({ summary }) {
           throw new Error("Missing collateral code/network for increase flow");
         }
 
-        // 1) Estimate (CoinRabbit requires amount in query)
+        // 1) Estimate
         const estimateRes = await getIncreaseEstimate(loanId, amountStr);
         assertResultOk(estimateRes, "Increase estimate");
 
@@ -85,7 +81,7 @@ export function useIncreaseAndPayCollateral({ summary }) {
             ? String(estimateRes.response.real_increase_amount)
             : amountStr;
 
-        // 2) Create increase tx (CoinRabbit returns an address)
+        // 2) Create increase tx
         const createRes = await createIncreaseTx(loanId, realIncreaseAmount);
         assertResultOk(createRes, "Create increase tx");
 
@@ -93,7 +89,7 @@ export function useIncreaseAndPayCollateral({ summary }) {
         if (!depositAddress)
           throw new Error("Increase tx did not return address");
 
-        const isFallbackTx = !!createRes?.response?.isFallbackTx;
+        const isFallbackTx = createRes?.response?.isFallbackTx === true;
 
         // 3) Send collateral via wallet
         const chain = resolveCollateralChainFamily(localSummary);
@@ -112,7 +108,15 @@ export function useIncreaseAndPayCollateral({ summary }) {
         const id = payRes?.txId || "";
         setTxId(id);
 
-        // 4) Refresh loan (optional)
+        // 4) If fallback, save tx hash
+        let fallbackSaved = false;
+        if (isFallbackTx) {
+          if (!id) throw new Error("Missing txId for fallback tx save");
+          const saved = await saveIncreaseFallbackTx(loanId, id);
+          fallbackSaved = saved?.result === true;
+        }
+
+        // 5) Refresh loan (optional)
         let freshLoan = null;
         try {
           freshLoan = await getLoanById(loanId);
@@ -124,6 +128,7 @@ export function useIncreaseAndPayCollateral({ summary }) {
           realIncreaseAmount,
           depositAddress,
           isFallbackTx,
+          fallbackSaved,
           txId: id,
           freshLoan,
         };
