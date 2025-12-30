@@ -41,15 +41,8 @@ export async function POST(req, { params }) {
     const receive_from = String(body.receive_from || "").trim(); // e.g. "external_wallet"
     const repay_by_network = String(body.repay_by_network || "").trim(); // e.g. "trx"
     const repay_by_code = String(body.repay_by_code || "").trim(); // e.g. "usdt"
-    const amount = body.amount; // number/string
 
-    if (
-      !address ||
-      !receive_from ||
-      !repay_by_network ||
-      !repay_by_code ||
-      amount == null
-    ) {
+    if (!address || !receive_from || !repay_by_network || !repay_by_code) {
       return new Response(
         JSON.stringify({
           error:
@@ -65,7 +58,6 @@ export async function POST(req, { params }) {
       receive_from,
       repay_by_network,
       repay_by_code,
-      amount,
     };
 
     const r = await fetch(`${API}/loans/${id}/pledge`, {

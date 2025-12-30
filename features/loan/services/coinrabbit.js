@@ -232,7 +232,6 @@ export async function createPledgeRedemptionTx(id, payload, opts = {}) {
   const receive_from = String(payload.receive_from || "").trim();
   const repay_by_network = String(payload.repay_by_network || "").trim();
   const repay_by_code = String(payload.repay_by_code || "").trim();
-  const amount = payload.amount;
 
   if (!address) throw new Error("createPledgeRedemptionTx missing address");
   if (!receive_from)
@@ -241,8 +240,6 @@ export async function createPledgeRedemptionTx(id, payload, opts = {}) {
     throw new Error("createPledgeRedemptionTx missing repay_by_network");
   if (!repay_by_code)
     throw new Error("createPledgeRedemptionTx missing repay_by_code");
-  if (amount == null)
-    throw new Error("createPledgeRedemptionTx missing amount");
 
   return fetchJSON(`/pledge/${id}`, {
     method: "POST",
@@ -254,7 +251,6 @@ export async function createPledgeRedemptionTx(id, payload, opts = {}) {
       receive_from,
       repay_by_network,
       repay_by_code,
-      amount,
     }),
     ...opts,
   });
