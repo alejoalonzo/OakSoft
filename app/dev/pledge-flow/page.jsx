@@ -1,17 +1,19 @@
 "use client";
 
 // app/dev/pledge-flow/page.jsx
-// Simplified flow:
+// Recommended flow (per CoinRabbit):
+
 // 0) Load loan (auto-fill repay_by_code / repay_by_network)
-// 1) Estimate repayment
-// 2) POST pledge (creates repayment intent -> returns pay address + transactionId)
-// 3) Pay with wallet (send to pledge response.address / loan.repayment.send_address)
+// 1) POST /loans/:id/pledge   DO NOT pass "amount" (creates repayment operation + address)
+// 2) GET /loans/:id           source of truth: repayment.send_address + repayment.amount_to_repayment
+// 3) Pay with wallet (send EXACT amount_to_repayment to send_address)
+//
+// Note: GET pledge estimate can stay for dashboard/UI, but it’s OPTIONAL (not required to close the loan).
 
 import { useMemo, useState } from "react";
 import { getIdToken } from "@/features/loan/services/session";
 import { usePayRepayment } from "@/features/loan/hooks/usePayRepayment";
 import useCurrencies from "@/features/loan/hooks/useCurrencies";
-
 
 const UI = {
   page: {
@@ -96,18 +98,16 @@ export default function PledgeFlowMiniPage() {
   const [repayByCode, setRepayByCode] = useState("");
   const [receiveFrom] = useState("external_wallet"); // fixed (simplified)
 
-  // amount (comes from estimate / loan)
-  const [amount, setAmount] = useState("");
-
   // loan state
   const [loanLoading, setLoanLoading] = useState(false);
   const [loanError, setLoanError] = useState("");
   const [loanResult, setLoanResult] = useState(null);
 
-  // estimate state
+  // estimate state (OPTIONAL UI)
   const [estimateLoading, setEstimateLoading] = useState(false);
   const [estimateError, setEstimateError] = useState("");
   const [estimateResult, setEstimateResult] = useState(null);
+  const [showEstimate, setShowEstimate] = useState(false);
 
   // pledge state
   const [pledgeLoading, setPledgeLoading] = useState(false);
@@ -130,19 +130,18 @@ export default function PledgeFlowMiniPage() {
     );
   }, [loanResult]);
 
-  // IMPORTANT: pay-to address is send_address (or pledge response.address)
+  // ✅ Source of truth for pay-to is repayment.send_address (after pledge + GET loan)
   const payToAddress = useMemo(() => {
     return (
-      String(pledgeResult?.response?.address || "").trim() ||
       String(repaymentFromLoan?.send_address || "").trim() ||
+      String(pledgeResult?.response?.address || "").trim() || // fallback display only
       ""
     );
-  }, [pledgeResult, repaymentFromLoan]);
+  }, [repaymentFromLoan, pledgeResult]);
 
   const finalAmountToSend = useMemo(() => {
-    // prefer loan.amount_to_repayment if present (final w/ fee)
-    const fromLoan = String(repaymentFromLoan?.amount_to_repayment || "").trim();
-      return fromLoan; //  si no hay, regresa ""
+    // ✅ Source of truth: repayment.amount_to_repayment (after pledge + GET loan)
+    return String(repaymentFromLoan?.amount_to_repayment || "").trim();
   }, [repaymentFromLoan]);
 
   async function authedFetchJSON(url, options = {}) {
@@ -164,7 +163,7 @@ export default function PledgeFlowMiniPage() {
     return j;
   }
 
-  // 0) load loan -> auto-fill repay_by_code/network + amount_to_repayment
+  // 0) load loan -> auto-fill repay_by_code/network
   const onLoadLoan = async () => {
     setLoanLoading(true);
     setLoanError("");
@@ -189,12 +188,6 @@ export default function PledgeFlowMiniPage() {
       setRepayByCode(code);
       setRepayByNetwork(net);
 
-      const isActive = rep?.active === true && String(rep?.transaction_status || "").toLowerCase() !== "finished";
-
-      const finalAmt = String(rep?.amount_to_repayment || "").trim();
-      if (isActive && finalAmt) setAmount(finalAmt);
-
-
       return j;
     } catch (e) {
       setLoanError(e?.message || "Get loan failed");
@@ -204,7 +197,7 @@ export default function PledgeFlowMiniPage() {
     }
   };
 
-  // 1) estimate (uses auto-filled repayBy*)
+  // OPTIONAL: estimate (for UI/dash only)
   const onEstimate = async () => {
     setEstimateLoading(true);
     setEstimateError("");
@@ -229,12 +222,6 @@ export default function PledgeFlowMiniPage() {
       );
 
       setEstimateResult(j);
-
-      const suggested = j?.response?.amount;
-      if (suggested != null && String(suggested).trim() !== "") {
-        setAmount(String(suggested));
-      }
-
       return j;
     } catch (e) {
       setEstimateError(e?.message || "Estimate failed");
@@ -244,7 +231,7 @@ export default function PledgeFlowMiniPage() {
     }
   };
 
-  // 2) pledge (uses auto-filled repayBy*)
+  // 1) pledge (NO amount)
   const onPledge = async () => {
     setPledgeLoading(true);
     setPledgeError("");
@@ -258,16 +245,14 @@ export default function PledgeFlowMiniPage() {
       }
       if (!returnAddress.trim()) throw new Error("Missing returnAddress");
 
-
       const payload = {
         address: returnAddress.trim(),
         extra_id: extraId.trim() ? extraId.trim() : null,
         receive_from: receiveFrom,
         repay_by_network: repayByNetwork,
         repay_by_code: repayByCode,
-        // ✅ NO amount
+        // ✅ DO NOT send amount
       };
-
 
       const j = await authedFetchJSON(
         `/api/coinrabbit/pledge/${encodeURIComponent(id)}`,
@@ -275,17 +260,13 @@ export default function PledgeFlowMiniPage() {
       );
 
       setPledgeResult(j);
-      // ✅ Always refresh loan after pledge to get FINAL send_address + amount_to_repayment
+
+      // ✅ Refresh loan so we have the FINAL invoice (send_address + amount_to_repayment)
       const fresh = await authedFetchJSON(
         `/api/coinrabbit/loans/${encodeURIComponent(id)}`,
         { method: "GET" }
       );
       setLoanResult(fresh);
-
-      const rep2 = fresh?.data?.response?.repayment || fresh?.response?.repayment || null;
-
-      const finalAmt2 = String(rep2?.amount_to_repayment || "").trim();
-      if (finalAmt2) setAmount(finalAmt2);
 
       return j;
     } catch (e) {
@@ -296,58 +277,49 @@ export default function PledgeFlowMiniPage() {
     }
   };
 
-  // 3) pay (send to pledge response.address / loan.repayment.send_address)
+  // 2) pay (always preflight GET loan again)
   const onPay = async () => {
     try {
       const id = loanId.trim();
+      if (!id) throw new Error("Missing loanId");
 
-      // ✅ final preflight: read the FINAL invoice again
       const fresh = await authedFetchJSON(
         `/api/coinrabbit/loans/${encodeURIComponent(id)}`,
         { method: "GET" }
       );
+      setLoanResult(fresh);
 
-      const rep = fresh?.data?.response?.repayment || fresh?.response?.repayment || null;
+      const rep =
+        fresh?.data?.response?.repayment || fresh?.response?.repayment || null;
 
-  const repayment = {
-    send_address: String(rep?.send_address || "").trim(),
-    address: String(rep?.address || "").trim(), // fallback
-    currency_code: String(rep?.currency_code || "").trim(),
-    currency_network: String(rep?.currency_network || "").trim(),
-
-    // IMPORTANT: include both
-    amount_to_repayment: String(rep?.amount_to_repayment || "").trim(),
-    amount: String(rep?.amount || "").trim(),
-    fee: String(rep?.fee || "").trim(),
-
-    transaction_status: String(rep?.transaction_status || "").trim(),
-    active: rep?.active === true,
-    payin_txs: Array.isArray(rep?.payin_txs) ? rep.payin_txs : [],
-  };
-
-  await payRun({ repayment });
-
+      const repayment = {
+        send_address: String(rep?.send_address || "").trim(),
+        currency_code: String(rep?.currency_code || "").trim(),
+        currency_network: String(rep?.currency_network || "").trim(),
+        amount_to_repayment: String(rep?.amount_to_repayment || "").trim(),
+      };
 
       await payRun({ repayment });
     } catch (_) {}
   };
 
   const canLoad = !loanLoading && loanId.trim();
-  const canEstimate =
-    !estimateLoading && loanId.trim() && repayByCode && repayByNetwork;
   const canPledge =
     !pledgeLoading &&
     loanId.trim() &&
     repayByCode &&
     repayByNetwork &&
-    returnAddress.trim() &&
-    String(amount).trim();
+    returnAddress.trim();
+
   const canPay =
     !payLoading &&
-    String(repaymentFromLoan?.send_address || "").trim() &&
-    String(repaymentFromLoan?.amount_to_repayment || "").trim() &&
+    payToAddress &&
+    finalAmountToSend &&
     repayByCode &&
     repayByNetwork;
+
+  const canEstimate =
+    !estimateLoading && loanId.trim() && repayByCode && repayByNetwork;
 
   return (
     <div style={UI.page}>
@@ -404,9 +376,9 @@ export default function PledgeFlowMiniPage() {
                 </span>
               </div>
               <div>
-                <b>Amount:</b>{" "}
+                <b>Exact amount (from GET loan):</b>{" "}
                 <span style={UI.code}>
-                  {finalAmountToSend ? finalAmountToSend : "(estimate / load loan)"}
+                  {finalAmountToSend ? finalAmountToSend : "(create pledge first)"}
                 </span>
               </div>
             </div>
@@ -416,7 +388,11 @@ export default function PledgeFlowMiniPage() {
         {/* Step 0 */}
         <div style={UI.card}>
           <h3 style={UI.h3}>0) Load loan (auto-fill repay coin/network)</h3>
-          <button onClick={onLoadLoan} disabled={!canLoad} style={UI.btn(canLoad, "purple")}>
+          <button
+            onClick={onLoadLoan}
+            disabled={!canLoad}
+            style={UI.btn(canLoad, "purple")}
+          >
             {loanLoading ? "Loading..." : "Get loan by id"}
           </button>
 
@@ -439,33 +415,25 @@ export default function PledgeFlowMiniPage() {
             </div>
           ) : null}
 
-          {loanResult ? <pre style={UI.pre}>{JSON.stringify(loanResult, null, 2)}</pre> : null}
+          {loanResult ? (
+            <pre style={UI.pre}>{JSON.stringify(loanResult, null, 2)}</pre>
+          ) : null}
         </div>
 
         {/* Step 1 */}
         <div style={UI.card}>
-          <h3 style={UI.h3}>1) Estimate repayment</h3>
-          <button onClick={onEstimate} disabled={!canEstimate} style={UI.btn(canEstimate, "blue")}>
-            {estimateLoading ? "Estimating..." : "Get estimate"}
-          </button>
-
-          {estimateError ? <div style={UI.err}>Estimate error: {estimateError}</div> : null}
-          {estimateResult ? <pre style={UI.pre}>{JSON.stringify(estimateResult, null, 2)}</pre> : null}
-        </div>
-
-        {/* Step 2 */}
-        <div style={UI.card}>
-          <h3 style={UI.h3}>2) POST pledge</h3>
+          <h3 style={UI.h3}>1) POST pledge (creates repayment operation)</h3>
           <p style={UI.hint}>
-            This creates the repayment intent and returns the address you must pay to.
+            ✅ IMPORTANT: we do <b>NOT</b> send <span style={UI.code}>amount</span> in this request.
+            After this, we refresh GET loan to read the exact{" "}
+            <span style={UI.code}>amount_to_repayment</span>.
           </p>
 
-          <div style={{ marginBottom: 10 }}>
-            <div style={UI.label}>amount (auto)</div>
-            <input value={amount} onChange={(e) => setAmount(e.target.value)} style={UI.input} />
-          </div>
-
-          <button onClick={onPledge} disabled={!canPledge} style={UI.btn(canPledge, "green")}>
+          <button
+            onClick={onPledge}
+            disabled={!canPledge}
+            style={UI.btn(canPledge, "green")}
+          >
             {pledgeLoading ? "Sending..." : "Create repayment (pledge)"}
           </button>
 
@@ -475,7 +443,7 @@ export default function PledgeFlowMiniPage() {
             <>
               <div style={{ marginTop: 10, fontSize: 13, lineHeight: 1.5 }}>
                 <div>
-                  <b>Pay-to address (from pledge):</b>{" "}
+                  <b>Address returned by pledge (FYI):</b>{" "}
                   <span style={UI.code}>
                     {String(pledgeResult?.response?.address || "").trim() || "(missing)"}
                   </span>
@@ -492,16 +460,20 @@ export default function PledgeFlowMiniPage() {
           ) : null}
         </div>
 
-        {/* Step 3 */}
+        {/* Step 2 */}
         <div style={UI.card}>
-          <h3 style={UI.h3}>3) Pay (opens wallet)</h3>
+          <h3 style={UI.h3}>2) Pay (opens wallet)</h3>
 
           <div style={{ fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
             <div>
-              <b>Send to:</b> <span style={UI.code}>{payToAddress || "(run pledge first)"}</span>
+              <b>Send to:</b>{" "}
+              <span style={UI.code}>
+                {payToAddress || "(create pledge first → then GET loan)"}
+              </span>
             </div>
             <div style={{ marginTop: 6 }}>
-              <b>Amount:</b> <span style={UI.code}>{finalAmountToSend || "(missing)"}</span>
+              <b>Exact amount:</b>{" "}
+              <span style={UI.code}>{finalAmountToSend || "(missing)"}</span>
             </div>
           </div>
 
@@ -513,6 +485,42 @@ export default function PledgeFlowMiniPage() {
           {payTxId ? (
             <div style={UI.ok}>
               Tx: <span style={UI.code}>{payTxId}</span>
+            </div>
+          ) : null}
+        </div>
+
+        {/* OPTIONAL: Estimate */}
+        <div style={UI.card}>
+          <h3 style={UI.h3}>
+            Optional: Pledge estimate (dashboard/UI only)
+          </h3>
+          <p style={UI.hint}>
+            This is <b>not required</b> to close the loan. It may fail for tiny residuals (min amount).
+          </p>
+
+          <button
+            onClick={() => setShowEstimate((v) => !v)}
+            style={UI.btn(true, "gray")}
+          >
+            {showEstimate ? "Hide estimate tools" : "Show estimate tools"}
+          </button>
+
+          {showEstimate ? (
+            <div style={{ marginTop: 10 }}>
+              <button
+                onClick={onEstimate}
+                disabled={!canEstimate}
+                style={UI.btn(canEstimate, "blue")}
+              >
+                {estimateLoading ? "Estimating..." : "Get estimate"}
+              </button>
+
+              {estimateError ? (
+                <div style={UI.err}>Estimate error: {estimateError}</div>
+              ) : null}
+              {estimateResult ? (
+                <pre style={UI.pre}>{JSON.stringify(estimateResult, null, 2)}</pre>
+              ) : null}
             </div>
           ) : null}
         </div>
