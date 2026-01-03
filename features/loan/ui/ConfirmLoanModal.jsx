@@ -2,23 +2,19 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { fmt } from "../utils/formatting";
-import { getLoanById, validateAddress } from "../services/coinrabbit";
+import { getLoanById } from "../services/coinrabbit";
 import { useConfirmAndPayCollateral } from "../hooks/useConfirmAndPayCollateral";
+import { useValidateAddress } from "@/features/loan/hooks/useValidateAddress";
 import { useRouter } from "next/navigation";
 import LoanStatusLabel from "@/features/loan/ui/LoanStatusLabel";
 
 
 export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfirmed }) {
   const [address, setAddress] = useState("");
-  const [addressError, setAddressError] = useState("");
 
   const router = useRouter();
   const [startListen, setStartListen] = useState(false);
   
-  // Remote validation state
-  const [validating, setValidating] = useState(false);
-  const [remoteValid, setRemoteValid] = useState(null); // null | true | false
-
   const [submitError, setSubmitError] = useState("");
 
   // Fresh loan state
@@ -49,6 +45,18 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
     return String(n).trim().toUpperCase();
   }, [summary?.borrowNetwork, summary?.borrowCode]);
 
+  const {
+  validating,
+  valid: remoteValid,
+  error: addressError,
+} = useValidateAddress({
+  address,
+  code: summary?.borrowCode,
+  network: payoutNetwork,
+  enabled: open,
+});
+
+
   // Hook that does: final validate -> confirm -> open wallet -> pay collateral
   const { run, loading: confirmingOrPaying, txId, error: flowError } =
     useConfirmAndPayCollateral({ summary, payoutNetwork });
@@ -66,8 +74,6 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
   useEffect(() => {
     if (!open) return;
     setAddress("");
-    setAddressError("");
-    setRemoteValid(null);
     setSubmitError("");
     setStartListen(false);
   }, [open]);
@@ -97,59 +103,13 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
   }, [open, loanId]);
 
   // Remote validate address with debounce (UX)
-  useEffect(() => {
-    if (!open) return;
 
-    const a = String(address || "").trim();
-
-    if (!a) {
-      setAddressError("");
-      setRemoteValid(null);
-      setValidating(false);
-      return;
-    }
-
-    if (!payoutNetwork) return;
-
-    const controller = new AbortController();
-
-    const t = setTimeout(async () => {
-      setValidating(true);
-      setAddressError("");
-
-      try {
-        const res = await validateAddress(
-          a,
-          summary?.borrowCode,
-          payoutNetwork,
-          null,
-          { signal: controller.signal }
-        );
-
-        setRemoteValid(!!res?.valid);
-        setAddressError(res?.valid ? "" : "Invalid address for this network");
-      } catch (err) {
-        if (controller.signal.aborted) return;
-        setRemoteValid(false);
-        setAddressError("Invalid address for this network");
-      } finally {
-        if (!controller.signal.aborted) setValidating(false);
-      }
-    }, 500);
-
-    return () => {
-      clearTimeout(t);
-      controller.abort();
-    };
-  }, [address, payoutNetwork, open, summary?.borrowCode]);
 
   if (!open) return null;
 
   const handleAddressChange = (e) => {
     const value = e.target.value;
     setAddress(value);
-    setAddressError("");
-    setRemoteValid(null);
   };
 
   const isAddressValid = !!address.trim() && !addressError && remoteValid === true;
@@ -159,7 +119,7 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
 
     const a = address.trim();
     if (!a) {
-      setAddressError("Enter an address");
+      setSubmitError("Enter an address");
       return;
     }
 
