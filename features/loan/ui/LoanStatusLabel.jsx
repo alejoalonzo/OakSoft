@@ -36,6 +36,7 @@ export default function LoanStatusLabel({
   pollMs = 8000,
   closedLabel = "CLOSED",
   finishedLabel = "FINISHED",
+  onFinished,
 }) {
   const [snapshot, setSnapshot] = useState(null);
   const [error, setError] = useState("");
@@ -98,6 +99,7 @@ export default function LoanStatusLabel({
         if (isDepositFinished(resp)) {
           setFinalText(finishedLabel);
           stopPolling();
+          onFinished?.(data);
           return;
         }
 

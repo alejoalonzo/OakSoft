@@ -4,11 +4,17 @@ import React, { useState, useEffect, useMemo } from "react";
 import { fmt } from "../utils/formatting";
 import { getLoanById, validateAddress } from "../services/coinrabbit";
 import { useConfirmAndPayCollateral } from "../hooks/useConfirmAndPayCollateral";
+import { useRouter } from "next/navigation";
+import LoanStatusLabel from "@/features/loan/ui/LoanStatusLabel";
+
 
 export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfirmed }) {
   const [address, setAddress] = useState("");
   const [addressError, setAddressError] = useState("");
 
+  const router = useRouter();
+  const [startListen, setStartListen] = useState(false);
+  
   // Remote validation state
   const [validating, setValidating] = useState(false);
   const [remoteValid, setRemoteValid] = useState(null); // null | true | false
@@ -47,6 +53,15 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
   const { run, loading: confirmingOrPaying, txId, error: flowError } =
     useConfirmAndPayCollateral({ summary, payoutNetwork });
 
+  const locked = confirmingOrPaying || !!txId || startListen;
+
+  // Start listening when txId appears
+  useEffect(() => {
+    if (!open) return;
+    if (txId) setStartListen(true);
+  }, [txId, open]);
+
+
   // Reset input when modal opens
   useEffect(() => {
     if (!open) return;
@@ -54,6 +69,7 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
     setAddressError("");
     setRemoteValid(null);
     setSubmitError("");
+    setStartListen(false);
   }, [open]);
 
   // Load loan when modal opens
@@ -291,22 +307,47 @@ export default function ConfirmLoanModal({ open, onClose, loan, summary, onConfi
           <p className="text-sm text-gray-600 mb-4">Loading loan details...</p>
         )}
 
-        <div className="flex justify-end gap-3 mt-4">
-          <button
-            className="px-4 py-2 text-sm rounded-lg border border-gray-300"
-            onClick={onClose}
-            disabled={confirmingOrPaying}
-          >
-            Cancel
-          </button>
-          <button
-            className="px-5 py-2 text-sm rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-60"
-            disabled={!isAddressValid || !loanId || confirmingOrPaying}
-            onClick={handleConfirm}
-          >
-            {confirmingOrPaying ? "Opening wallet..." : "Confirm"}
-          </button>
-        </div>
+      <div className="mt-4">
+        {!txId ? (
+          <div className="flex justify-end gap-3">
+            <button
+              className="px-4 py-2 text-sm rounded-lg border border-gray-300"
+              onClick={onClose}
+              disabled={confirmingOrPaying}
+            >
+              Cancel
+            </button>
+            <button
+              className="px-5 py-2 text-sm rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-60"
+              disabled={!isAddressValid || !loanId || confirmingOrPaying}
+              onClick={handleConfirm}
+            >
+              {confirmingOrPaying ? "Opening wallet..." : "Confirm"}
+            </button>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <div className="text-sm font-semibold">Processing deposit</div>
+            <div className="text-xs text-gray-500 mt-1">
+              Transaction sent: <span className="font-mono">{txId}</span>
+            </div>
+
+            <div className="mt-2">
+              <LoanStatusLabel
+                loanId={loanId}
+                start={true}
+                finishedLabel="finished"
+                onFinished={() => {
+                  onClose?.();
+                  router.push("/dashboard/loans");
+                  router.refresh();
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       </div>
     </div>
   );

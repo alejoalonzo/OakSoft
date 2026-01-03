@@ -1,71 +1,114 @@
 "use client";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { auth, db } from "@/lib/firebaseClient";
+import { onAuthStateChanged } from "firebase/auth";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 
 export default function Page() {
-  const [loanId, setLoanId] = useState("");
   const router = useRouter();
 
-  return (
-    <div style={{ padding: 20, display: "grid", gap: 16, maxWidth: 340 }}>
-      <h2 style={{ fontWeight: 600, fontSize: 22, marginBottom: 8 }}>My loans</h2>
+  const [uid, setUid] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loans, setLoans] = useState([]);
 
-      <input
-        value={loanId}
-        onChange={(e) => setLoanId(e.target.value)}
-        placeholder="Paste loan ID"
-        style={{
-          padding: '10px 12px',
-          border: '1.5px solid #a0ff2f',
-          borderRadius: 8,
-          fontSize: 16,
-          outline: 'none',
-          marginBottom: 4,
-          background: 'var(--background)',
-          color: 'var(--foreground)',
-          boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)'
-        }}
-      />
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button
-          onClick={() => router.push(`/dashboard/loans/${loanId.trim()}`)}
-          disabled={!loanId.trim()}
+  const [snapErr, setSnapErr] = useState("");
+
+
+  // 1) Detect user
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUid(u?.uid || null);
+    });
+    return () => unsub();
+  }, []);
+
+  // 2) Subscribe to ACTIVE loans
+  useEffect(() => {
+    if (!uid) {
+      setLoans([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    const q = query(
+      collection(db, "loans"),
+      where("uid", "==", uid),
+      where("phase", "==", "ACTIVE")
+    );
+
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setLoans(items);
+        setSnapErr("");
+        setLoading(false);
+      },
+      (err) => {
+        console.error("LOANS SNAPSHOT ERROR:", err);
+        setSnapErr(err?.message || "Snapshot error");
+        setLoading(false);
+      }
+      
+    );
+
+    return () => unsub();
+  }, [uid]);
+
+  return (
+    <div style={{ padding: 20, display: "grid", gap: 16, maxWidth: 520 }}>
+      <h2 style={{ fontWeight: 600, fontSize: 22, marginBottom: 4 }}>My active loans</h2>
+
+      {!uid && <div style={{ fontSize: 14, color: "#666" }}>Please log in.</div>}
+
+      {uid && loading && <div style={{ fontSize: 14, color: "#666" }}>Loading...</div>}
+
+      {snapErr && <div style={{ color: "red", fontSize: 12 }}>{snapErr}</div>}
+
+      {uid && !loading && loans.length === 0 && (
+        <div style={{ fontSize: 14, color: "#666" }}>No active loans yet.</div>
+      )}
+
+      {loans.map((l) => (
+        <div
+          key={l.id}
           style={{
-            padding: '10px 18px',
-            background: 'var(--color-primary-500)',
-            color: '#222',
-            border: 'none',
-            borderRadius: 8,
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: !loanId.trim() ? 'not-allowed' : 'pointer',
-            opacity: !loanId.trim() ? 0.6 : 1,
-            transition: 'background 0.2s, opacity 0.2s',
-            boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)'
+            border: "1.5px solid #a0ff2f",
+            borderRadius: 10,
+            padding: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
           }}
         >
-          Open loan
-        </button>
-        <button
-          onClick={() => setLoanId("")}
-          disabled={!loanId}
-          style={{
-            padding: '10px 18px',
-            background: '#eee',
-            color: '#444',
-            border: 'none',
-            borderRadius: 8,
-            fontWeight: 500,
-            fontSize: 16,
-            cursor: !loanId ? 'not-allowed' : 'pointer',
-            opacity: !loanId ? 0.6 : 1,
-            transition: 'background 0.2s, opacity 0.2s',
-            boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)'
-          }}
-        >
-          Clear
-        </button>
-      </div>
+          <div style={{ display: "grid", gap: 4 }}>
+            <div style={{ fontWeight: 600 }}>Loan {l.loanId || l.id}</div>
+            <div style={{ fontSize: 12, color: "#666" }}>
+              status: {l.status || l.coinrabbit?.status || "-"}
+            </div>
+          </div>
+
+          <button
+            onClick={() => router.push(`/dashboard/loans/${encodeURIComponent(l.loanId || l.id)}`)}
+            style={{
+              padding: "10px 14px",
+              background: "var(--color-primary-500)",
+              color: "#222",
+              border: "none",
+              borderRadius: 8,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Open
+          </button>
+        </div>
+      ))}
     </div>
   );
 }

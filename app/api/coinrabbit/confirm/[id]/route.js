@@ -73,6 +73,7 @@ export async function POST(req, { params }) {
         {
           updatedAt: now,
           phase: "AWAITING_DEPOSIT",
+          status: coinrabbitStatus || "confirmed",
           coinrabbit: {
             lastSyncedAt: now,
             status: coinrabbitStatus,

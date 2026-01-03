@@ -2,12 +2,15 @@
 
 
 import { useState, useEffect } from "react";
-import { getIncreaseEstimate, refreshDepositAddress } from "@/features/loan/services/session";
+import { useRouter } from "next/navigation";
+import { getIncreaseEstimate, refreshDepositAddress } from "@/features/loan/services/coinrabbit";
 import LoanStatusLabel from "@/features/loan/ui/LoanStatusLabel";
 import { useIncreaseAndPayCollateral } from "@/features/loan/hooks/useIncreaseAndPayCollateral";
 
 export default function IncreaseLoan({ loanId }) {
   const loanIdFromUrl = String(loanId || "").trim();
+
+    const router = useRouter();
   
     const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -163,7 +166,7 @@ export default function IncreaseLoan({ loanId }) {
 
     try {
       const res = await runIncreaseFlow({
-        loanId,
+        loanId: id,
         amount: amountToUse,
       });
 
@@ -187,24 +190,39 @@ export default function IncreaseLoan({ loanId }) {
 
   return (
     <div style={{ padding: 20, display: "grid", gap: 18, maxWidth: 480 }}>
-      <button
-        type="button"
+    <button
+      type="button"
+      onClick={() => router.push("/dashboard/loans")}
+      style={{
+        padding: "10px 18px",
+        background: "#eee",
+        color: "#444",
+        border: "none",
+        borderRadius: 8,
+        fontWeight: 500,
+        fontSize: 16,
+        cursor: "pointer",
+        boxShadow: "0 1px 4px 0 rgba(0,0,0,0.04)",
+        width: "fit-content",
+      }}
+    >
+      ← Back to My Loans
+    </button>
+    <div style={{ fontSize: 12, color: "#666" }}>
+      If the deposit gets stuck or the address expires, you can{" "}
+      <span
         onClick={() => setShowAdvanced((s) => !s)}
         style={{
-          padding: '10px 18px',
-          background: 'var(--color-primary-500)',
-          color: '#222',
-          border: 'none',
-          borderRadius: 8,
+          color: "var(--color-primary-500)",
+          cursor: "pointer",
           fontWeight: 600,
-          fontSize: 16,
-          cursor: 'pointer',
-          marginBottom: 8,
-          boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)'
+          textDecoration: "underline",
         }}
       >
-        {showAdvanced ? "Hide advanced" : "Show advanced"}
-      </button>
+        refresh the deposit address
+      </span>
+      .
+    </div>
 
       {showAdvanced && (
         <div style={{ ...boxStyle, background: '#f8fff0', borderRadius: 10, border: '1.5px solid #a0ff2f' }}>
@@ -241,16 +259,31 @@ export default function IncreaseLoan({ loanId }) {
             </div>
           )}
 
-          {depositOut && <pre>{JSON.stringify(depositOut, null, 2)}</pre>}
           {depositErr && <pre style={{ color: "red" }}>{depositErr}</pre>}
         </div>
       )}
 
-      <div style={{ ...boxStyle, background: '#f3f4f6', borderRadius: 10, border: '1.5px solid #a0ff2f' }}>
-        <h3 style={{ margin: 0, fontWeight: 600, fontSize: 18 }}>Increase (estimate → confirm)</h3>
+      <div style={{ ...boxStyle, background: '#f3f4f6', borderRadius: 12, border: '1.5px solid #a0ff2f', boxShadow: '0 2px 12px 0 rgba(160,255,47,0.08)', padding: 24, marginTop: 12 }}>
+        <h3 style={{ margin: 0, fontWeight: 700, fontSize: 20, color: '#222' }}>Increase (estimate → confirm)</h3>
+        
+        <div style={{ fontSize: 12, color: "#666" }}>
+          loanIdFromUrl: <b>{loanIdFromUrl || "(empty)"}</b>
+        </div>
+
+
         <form
           onSubmit={runIncreaseEstimate}
-          style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 8 }}
+          style={{
+            display: "flex",
+            gap: 14,
+            flexWrap: "wrap",
+            alignItems: "center",
+            background: '#fff',
+            borderRadius: 10,
+            padding: '18px 16px',
+            marginTop: 16,
+            boxShadow: '0 1px 6px 0 rgba(0,0,0,0.04)'
+          }}
         >
           <input
             value={increaseAmount}
@@ -258,13 +291,14 @@ export default function IncreaseLoan({ loanId }) {
             placeholder="amount (e.g. 0.001)"
             style={{
               width: 180,
-              padding: '10px 12px',
-              border: '1.5px solid #a0ff2f',
+              padding: '12px 14px',
+              border: '2px solid #a0ff2f',
               borderRadius: 8,
-              fontSize: 16,
+              fontSize: 17,
               outline: 'none',
-              background: 'var(--background)',
-              color: 'var(--foreground)',
+              background: '#f8fff0',
+              color: '#222',
+              fontWeight: 500,
               boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)'
             }}
           />
@@ -272,32 +306,33 @@ export default function IncreaseLoan({ loanId }) {
             type="submit"
             disabled={loadingIncrease || !loanIdFromUrl.trim()}
             style={{
-              padding: '10px 18px',
+              padding: '12px 22px',
               background: 'var(--color-primary-500)',
               color: '#222',
               border: 'none',
               borderRadius: 8,
-              fontWeight: 600,
-              fontSize: 16,
+              fontWeight: 700,
+              fontSize: 17,
+              letterSpacing: 0.5,
               cursor: loadingIncrease || !loanIdFromUrl.trim() ? 'not-allowed' : 'pointer',
               opacity: loadingIncrease || !loanIdFromUrl.trim() ? 0.6 : 1,
-              boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)'
+              boxShadow: '0 2px 8px 0 rgba(160,255,47,0.10)'
             }}
           >
-            {loadingIncrease ? "Loading..." : "GetIncreaseEstimate"}
+            {loadingIncrease ? "Loading..." : "Get Increase Estimate"}
           </button>
           <button
             type="button"
             onClick={runConfirmIncrease}
             disabled={!increaseReady || increaseFlowLoading}
             style={{
-              padding: '10px 18px',
+              padding: '12px 22px',
               background: '#eee',
               color: '#444',
               border: 'none',
               borderRadius: 8,
-              fontWeight: 500,
-              fontSize: 16,
+              fontWeight: 600,
+              fontSize: 17,
               cursor: !increaseReady || increaseFlowLoading ? 'not-allowed' : 'pointer',
               opacity: !increaseReady || increaseFlowLoading ? 0.6 : 1,
               boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)'
@@ -309,34 +344,60 @@ export default function IncreaseLoan({ loanId }) {
         <LoanStatusLabel loanId={loanIdFromUrl.trim()} start={startListen} />
 
 
-            {increaseOut?.extracted?.isSuccess && (
-            <div style={{ padding: 12, border: "1px solid #ddd", background: "#f3f4f6" }}>
-                <div style={{ marginBottom: 6 }}>
-                <b>requested:</b> {String(increaseOut.extracted?.amount)}
-                </div>
-                <div>
-                <b>real_increase_amount:</b>{" "}
-                {String(increaseOut.extracted?.realIncreaseAmount)}
-                </div>
-                <div>
-                <b>new_amount:</b> {String(increaseOut.extracted?.newAmount)}
-                </div>
-                <div>
-                <b>liquidation_price:</b>{" "}
-                {String(increaseOut.extracted?.liquidationPrice)}
-                </div>
-                <div>
-                <b>precision:</b> {String(increaseOut.extracted?.precision)}
-                </div>
+        {increaseOut?.extracted?.isSuccess && (
+          <div
+            style={{
+              padding: 18,
+              border: "2px solid #a0ff2f",
+              background: "#fff",
+              borderRadius: 10,
+              marginTop: 18,
+              marginBottom: 8,
+              boxShadow: '0 2px 12px 0 rgba(160,255,47,0.08)',
+              color: '#1a1a1a',
+              fontSize: 16,
+              fontWeight: 500
+            }}
+          >
+            <div style={{ marginBottom: 8 }}>
+              <b>Requested:</b> <span style={{ color: '#222' }}>{String(increaseOut.extracted?.amount)}</span>
             </div>
-            )}
+            <div>
+              <b>Real increase amount:</b> <span style={{ color: '#222' }}>{String(increaseOut.extracted?.realIncreaseAmount)}</span>
+            </div>
+            <div>
+              <b>New amount:</b> <span style={{ color: '#222' }}>{String(increaseOut.extracted?.newAmount)}</span>
+            </div>
+            <div>
+              <b>Liquidation price:</b> <span style={{ color: '#222' }}>{String(increaseOut.extracted?.liquidationPrice)}</span>
+            </div>
+            <div>
+              <b>Precision:</b> <span style={{ color: '#222' }}>{String(increaseOut.extracted?.precision)}</span>
+            </div>
+          </div>
+        )}
 
-            {increaseOut && !increaseOut?.extracted?.isSuccess && (
-            <div style={{ padding: 12, border: "1px solid #fca5a5", background: "#fef2f2" }}>
-                <b>CoinRabbit error:</b>{" "}
-                {increaseOut?.data?.response?.error || "Unknown error"}
+        {increaseOut && !increaseOut?.extracted?.isSuccess && (
+          <div
+            style={{
+              padding: 18,
+              border: "2px solid #f87171",
+              background: "#fff",
+              borderRadius: 10,
+              marginTop: 18,
+              marginBottom: 8,
+              boxShadow: '0 2px 12px 0 rgba(248,113,113,0.08)',
+              color: '#b91c1c',
+              fontSize: 16,
+              fontWeight: 500
+            }}
+          >
+            <div style={{ marginBottom: 8 }}>
+              <b>CoinRabbit error:</b> <span style={{ color: '#b91c1c' }}>{increaseOut?.data?.response?.error || "Unknown error"}</span>
             </div>
-            )}
+            <pre style={{ background: '#fef2f2', color: '#222', borderRadius: 6, padding: 10, fontSize: 14, margin: 0, overflowX: 'auto' }}>{JSON.stringify(increaseOut?.data, null, 2)}</pre>
+          </div>
+        )}
 
             {(increaseFlowErr || increaseFlowHookErr) && (
             <div style={{ padding: 12, border: "1px solid #fca5a5", background: "#fef2f2" }}>
@@ -349,9 +410,6 @@ export default function IncreaseLoan({ loanId }) {
                 <b>Sent:</b> <span style={{ fontFamily: "monospace" }}>{increaseFlowTxId}</span>
             </div>
             )}
-
-            {increaseFlowOut && <pre>{JSON.stringify(increaseFlowOut, null, 2)}</pre>}
-            {increaseOut && <pre>{JSON.stringify(increaseOut, null, 2)}</pre>}
             {increaseErr && <pre style={{ color: "red" }}>{increaseErr}</pre>}
         </div>
     </div>

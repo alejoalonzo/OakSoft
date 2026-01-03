@@ -1,5 +1,7 @@
 import IncreaseLoan from "@/features/loan/ui/IncreaseLoan";
 
-export default function Page({ params }) {
-  return <IncreaseLoan loanId={params.loanId} />;
+export default async function Page({ params }) {
+  // Next 16: params can be a Promise
+  const { id } = await params;
+  return <IncreaseLoan loanId={id} />;
 }

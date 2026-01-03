@@ -46,6 +46,46 @@ export async function GET(req, { params }) {
       xUserToken,
     });
 
+    // 6) Sync phase/status to Firestore (does not change API response)
+    if (ok) {
+      const now = Date.now();
+      const resp = data?.response || {};
+
+      const depTx = String(
+        resp?.deposit?.transaction_status || ""
+      ).toLowerCase(); // waiting|confirming|finished
+      const coinrabbitStatus = resp?.status || null;
+
+      const current = snap.data() || {};
+      const currentPhase = current.phase || null;
+
+      let nextPhase = currentPhase;
+
+      // If deposit tx is finished => ACTIVE
+      if (depTx.includes("finished")) nextPhase = "ACTIVE";
+
+      // Optional: if loan closed => CLOSED (leave commented if you want for now)
+      // const s = String(coinrabbitStatus || "").toLowerCase();
+      // if (s.includes("closed") || s.includes("repaid") || s.includes("liquidat") || s.includes("cancel")) {
+      //   nextPhase = "CLOSED";
+      // }
+
+      await loanRef.set(
+        {
+          updatedAt: now,
+          phase: nextPhase,
+          status: coinrabbitStatus || current.status || null,
+          coinrabbit: {
+            ...(current.coinrabbit || {}),
+            lastSyncedAt: now,
+            status: coinrabbitStatus,
+            depositTxStatus: resp?.deposit?.transaction_status || null,
+          },
+        },
+        { merge: true }
+      );
+    }
+
     return NextResponse.json(data, { status: ok ? 200 : status });
   } catch (e) {
     console.error("Get loan by id error:", e);
