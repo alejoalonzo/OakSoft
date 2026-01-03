@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebaseClient";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
 
 export default function Page() {
   const router = useRouter();
@@ -12,6 +12,11 @@ export default function Page() {
   const [uid, setUid] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loans, setLoans] = useState([]);
+
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyErr, setHistoryErr] = useState("");
+
 
   const [snapErr, setSnapErr] = useState("");
 
@@ -37,7 +42,8 @@ export default function Page() {
     const q = query(
       collection(db, "loans"),
       where("uid", "==", uid),
-      where("phase", "==", "ACTIVE")
+      where("phase", "==", "ACTIVE"),
+      orderBy("updatedAt", "desc")
     );
 
     const unsub = onSnapshot(
@@ -58,6 +64,42 @@ export default function Page() {
 
     return () => unsub();
   }, [uid]);
+
+  // 3) Subscribe to CLOSED/LIQUIDATED loans (history)
+  useEffect(() => {
+    if (!uid) {
+      setHistory([]);
+      setLoadingHistory(false);
+      return;
+    }
+
+    setLoadingHistory(true);
+
+    const qh = query(
+      collection(db, "loans"),
+      where("uid", "==", uid),
+      where("phase", "in", ["CLOSED", "LIQUIDATED"]),
+      orderBy("updatedAt", "desc")
+    );
+
+    const unsub = onSnapshot(
+      qh,
+      (snap) => {
+        const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setHistory(items);
+        setHistoryErr("");
+        setLoadingHistory(false);
+      },
+      (err) => {
+        console.error("HISTORY SNAPSHOT ERROR:", err);
+        setHistoryErr(err?.message || "Snapshot error");
+        setLoadingHistory(false);
+      }
+    );
+
+    return () => unsub();
+  }, [uid]);
+
 
   return (
     <div style={{ padding: 20, display: "grid", gap: 16, maxWidth: 520 }}>
@@ -109,6 +151,56 @@ export default function Page() {
           </button>
         </div>
       ))}
+
+      <hr style={{ border: "none", borderTop: "1px solid #eee", margin: "8px 0" }} />
+
+      <h3 style={{ fontWeight: 600, fontSize: 18, margin: 0 }}>History</h3>
+
+      {loadingHistory && <div style={{ fontSize: 14, color: "#666" }}>Loading history...</div>}
+      {historyErr && <div style={{ color: "red", fontSize: 12 }}>{historyErr}</div>}
+
+      {!loadingHistory && history.length === 0 && (
+        <div style={{ fontSize: 14, color: "#666" }}>No closed loans yet.</div>
+      )}
+
+      {history.map((l) => (
+        <div
+          key={l.id}
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: 10,
+            padding: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            opacity: 0.85,
+          }}
+        >
+          <div style={{ display: "grid", gap: 4 }}>
+            <div style={{ fontWeight: 600 }}>Loan {l.loanId || l.id}</div>
+            <div style={{ fontSize: 12, color: "#666" }}>
+              phase: {l.phase || "-"} | status: {l.status || l.coinrabbit?.status || "-"}
+            </div>
+          </div>
+
+          <button
+            onClick={() => router.push(`/dashboard/loans/${encodeURIComponent(l.loanId || l.id)}`)}
+            style={{
+              padding: "10px 14px",
+              background: "#eee",
+              color: "#444",
+              border: "none",
+              borderRadius: 8,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            View
+          </button>
+        </div>
+      ))}
+
     </div>
   );
 }

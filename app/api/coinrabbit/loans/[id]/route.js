@@ -10,6 +10,22 @@ import { adminDB } from "@/lib/firebaseAdmin";
 const getLoanMode = process.env.COINRABBIT_GET_LOAN_MODE ?? "live";
 const isMockGetLoan = getLoanMode === "mock";
 
+// Map CoinRabbit status -> our Firestore phase (UI logic)
+function mapPhaseFromCoinrabbitStatus(statusRaw) {
+  const s = String(statusRaw || "").toLowerCase();
+  if (!s) return null;
+
+  // Final outcomes
+  if (s === "closed") return "CLOSED";
+  if (s === "liquidated") return "LIQUIDATED";
+
+  // Pledge close flow (in progress)
+  if (s === "pledge_redeemed") return "CLOSING";
+  if (s === "pledge_transaction_sent") return "CLOSING";
+
+  return null; // no change
+}
+
 export async function GET(req, { params }) {
   try {
     // 1) Auth of the app
@@ -56,19 +72,20 @@ export async function GET(req, { params }) {
       ).toLowerCase(); // waiting|confirming|finished
       const coinrabbitStatus = resp?.status || null;
 
+      const mapped = mapPhaseFromCoinrabbitStatus(coinrabbitStatus);
+
       const current = snap.data() || {};
       const currentPhase = current.phase || null;
 
       let nextPhase = currentPhase;
 
-      // If deposit tx is finished => ACTIVE
-      if (depTx.includes("finished")) nextPhase = "ACTIVE";
+      // A) CoinRabbit status mapping has priority (pledge/closed/liquidated)
+      if (mapped) nextPhase = mapped;
 
-      // Optional: if loan closed => CLOSED (leave commented if you want for now)
-      // const s = String(coinrabbitStatus || "").toLowerCase();
-      // if (s.includes("closed") || s.includes("repaid") || s.includes("liquidat") || s.includes("cancel")) {
-      //   nextPhase = "CLOSED";
-      // }
+      // B) If no mapped status, promote to ACTIVE only when deposit is finished
+      if (!mapped && depTx.includes("finished")) nextPhase = "ACTIVE";
+
+      // C) Otherwise keep whatever we already had (DRAFT / CONFIRMED / ACTIVE etc.)
 
       await loanRef.set(
         {
