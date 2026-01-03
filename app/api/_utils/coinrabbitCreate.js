@@ -26,6 +26,7 @@ export async function saveCoinrabbitLoan({ uid, data, payload }) {
     {
       uid,
       loanId: String(loanId),
+      phase: "DRAFT",
       status: data?.response?.status || "created",
       deposit: data?.response?.deposit || null,
       borrow: data?.response?.loan || null,

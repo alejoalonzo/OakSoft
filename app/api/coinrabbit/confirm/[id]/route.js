@@ -72,6 +72,7 @@ export async function POST(req, { params }) {
       await loanRef.set(
         {
           updatedAt: now,
+          phase: "AWAITING_DEPOSIT",
           coinrabbit: {
             lastSyncedAt: now,
             status: coinrabbitStatus,

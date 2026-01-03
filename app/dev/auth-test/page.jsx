@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { getIdToken } from "@/features/loan/services/session";
-import CreateLoanTest from "./CreateLoanTest";
 import LoanStatusLabel from "@/features/loan/ui/LoanStatusLabel";
 import { useIncreaseAndPayCollateral } from "@/features/loan/hooks/useIncreaseAndPayCollateral";
 
@@ -426,9 +425,6 @@ i
         {increaseErr && <pre style={{ color: "red" }}>{increaseErr}</pre>}
       </div>
 
-      <div style={{ borderTop: "1px solid #ddd", paddingTop: 16 }}>
-        <CreateLoanTest />
-      </div>
     </div>
   );
 }

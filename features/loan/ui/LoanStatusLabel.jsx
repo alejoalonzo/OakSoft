@@ -17,6 +17,12 @@ function isClosed(resp) {
   );
 }
 
+// Increase/deposit tx terminal state (CoinRabbit uses waiting/confirming/finished)
+function isDepositFinished(resp) {
+  const depTx = String(resp?.deposit?.transaction_status || "").toLowerCase();
+  return depTx.includes("finished");
+}
+
 function fmtHash(h) {
   if (!h || h === "-") return "-";
   const s = String(h);
@@ -29,10 +35,11 @@ export default function LoanStatusLabel({
   start = false, // start polling only after user sent collateral tx
   pollMs = 8000,
   closedLabel = "CLOSED",
+  finishedLabel = "FINISHED",
 }) {
   const [snapshot, setSnapshot] = useState(null);
   const [error, setError] = useState("");
-  const [finalText, setFinalText] = useState(""); // keeps CLOSED forever once closed
+  const [finalText, setFinalText] = useState(""); // keeps final forever once set
 
   const timerRef = useRef(null);
   const inFlightRef = useRef(false);
@@ -63,7 +70,7 @@ export default function LoanStatusLabel({
   }, [loanId, start, snapshot, error, finalText]);
 
   useEffect(() => {
-    // If we are closed, never poll again
+    // If we already reached a final state, never poll again
     if (finalText) {
       stopPolling();
       return;
@@ -86,9 +93,19 @@ export default function LoanStatusLabel({
         setSnapshot(data);
 
         const resp = data?.response || {};
+
+        // 1) Stop if deposit tx is finished (waiting/confirming/finished)
+        if (isDepositFinished(resp)) {
+          setFinalText(finishedLabel);
+          stopPolling();
+          return;
+        }
+
+        // 2) Stop if loan is closed for real
         if (isClosed(resp)) {
           setFinalText(closedLabel);
           stopPolling();
+          return;
         }
       } catch (e) {
         setError(e?.message || "Get loan failed");
@@ -101,7 +118,7 @@ export default function LoanStatusLabel({
     timerRef.current = setInterval(tick, Math.max(3000, Number(pollMs) || 8000));
 
     return () => stopPolling();
-  }, [loanId, start, pollMs, finalText, closedLabel]);
+  }, [loanId, start, pollMs, finalText, closedLabel, finishedLabel]);
 
   return (
     <div className="text-xs">
