@@ -10,7 +10,11 @@
 // Note: GET pledge estimate can stay for dashboard/UI, but it’s OPTIONAL (not required to close the loan).
 
 import { useEffect, useMemo, useState } from "react";
-import { getIdToken } from "@/features/loan/services/session";
+import {
+  getLoanById,
+  getPledgeEstimate,
+  createPledgeRedemptionTx,
+} from "@/features/loan/services/coinrabbit";
 import { useValidateAddress } from "@/features/loan/hooks/useValidateAddress";
 import { usePayRepayment } from "@/features/loan/hooks/usePayRepayment";
 import useCurrencies from "@/features/loan/hooks/useCurrencies";
@@ -164,25 +168,6 @@ export default function PledgeFlowMiniPage({ loanId }) {
     return String(repaymentFromLoan?.amount_to_repayment || "").trim();
   }, [repaymentFromLoan]);
 
-  async function authedFetchJSON(url, options = {}) {
-    const idToken = await getIdToken();
-    if (!idToken) throw new Error("No logged in user");
-
-    const r = await fetch(url, {
-      cache: "no-store",
-      ...options,
-      headers: {
-        Authorization: `Bearer ${idToken}`,
-        "Content-Type": "application/json",
-        ...(options.headers || {}),
-      },
-    });
-
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j?.error || j?.message || `HTTP ${r.status}`);
-    return j;
-  }
-
   // 0) load loan -> auto-fill repay_by_code/network
   const onLoadLoan = async () => {
     setLoanLoading(true);
@@ -193,10 +178,7 @@ export default function PledgeFlowMiniPage({ loanId }) {
       const id = loanIdFromUrl;
       if (!id) throw new Error("Missing loanId");
 
-      const j = await authedFetchJSON(
-        `/api/coinrabbit/loans/${encodeURIComponent(id)}`,
-        { method: "GET" }
-      );
+      const j = await getLoanById(id);
       setLoanResult(j);
 
       const dep = j?.data?.response?.deposit || j?.response?.deposit || null;
@@ -272,11 +254,11 @@ export default function PledgeFlowMiniPage({ loanId }) {
         receive_from: receiveFrom,
       }).toString();
 
-      const j = await authedFetchJSON(
-        `/api/coinrabbit/pledge-estimate/${encodeURIComponent(id)}?${qs}`,
-        { method: "GET" }
-      );
-
+      const j = await getPledgeEstimate(id, {
+        repay_by_network: repayByNetwork,
+        repay_by_code: repayByCode,
+        receive_from: receiveFrom,
+      });
       setEstimateResult(j);
       return j;
     } catch (e) {
@@ -310,21 +292,21 @@ export default function PledgeFlowMiniPage({ loanId }) {
         // ✅ DO NOT send amount
       };
 
-      const j = await authedFetchJSON(
-        `/api/coinrabbit/pledge/${encodeURIComponent(id)}`,
-        { method: "POST", body: JSON.stringify(payload) }
-      );
-
+      const j = await createPledgeRedemptionTx(id, {
+        address: returnAddress.trim(),
+        extra_id: null,
+        receive_from: receiveFrom,
+        repay_by_network: repayByNetwork,
+        repay_by_code: repayByCode,
+      });
       setPledgeResult(j);
 
-      // ✅ Refresh loan so we have the FINAL invoice (send_address + amount_to_repayment)
-      const fresh = await authedFetchJSON(
-        `/api/coinrabbit/loans/${encodeURIComponent(id)}`,
-        { method: "GET" }
-      );
+      // refresh loan
+      const fresh = await getLoanById(id);
       setLoanResult(fresh);
 
       return j;
+
     } catch (e) {
       setPledgeError(e?.message || "Pledge failed");
       throw e;
@@ -339,10 +321,7 @@ export default function PledgeFlowMiniPage({ loanId }) {
       const id = loanIdFromUrl;
       if (!id) throw new Error("Missing loanId");
 
-      const fresh = await authedFetchJSON(
-        `/api/coinrabbit/loans/${encodeURIComponent(id)}`,
-        { method: "GET" }
-      );
+      const fresh = await getLoanById(id);
       setLoanResult(fresh);
 
       const rep =
