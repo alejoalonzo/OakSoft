@@ -9,7 +9,7 @@
 //
 // Note: GET pledge estimate can stay for dashboard/UI, but it’s OPTIONAL (not required to close the loan).
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getIdToken } from "@/features/loan/services/session";
 import { useValidateAddress } from "@/features/loan/hooks/useValidateAddress";
 import { usePayRepayment } from "@/features/loan/hooks/usePayRepayment";
@@ -95,6 +95,11 @@ export default function PledgeFlowMiniPage({ loanId }) {
   // where CoinRabbit returns collateral after repayment
     const [returnAddress, setReturnAddress] = useState("");
 
+  // collateral currency (NO UI inputs, for validation only)
+    const [collateralCode, setCollateralCode] = useState("");
+    const [collateralNetwork, setCollateralNetwork] = useState("");
+
+
   // internal auto-filled repayment params (NO UI inputs)
     const [repayByNetwork, setRepayByNetwork] = useState("");
     const [repayByCode, setRepayByCode] = useState("");
@@ -115,6 +120,19 @@ export default function PledgeFlowMiniPage({ loanId }) {
     const [pledgeLoading, setPledgeLoading] = useState(false);
     const [pledgeError, setPledgeError] = useState("");
     const [pledgeResult, setPledgeResult] = useState(null);
+
+  // validate return address
+    const {
+      validating: validatingReturn,
+      valid: returnRemoteValid,
+      error: returnAddressError,
+    } = useValidateAddress({
+      address: returnAddress,
+      code: collateralCode,
+      network: collateralNetwork,
+      enabled: true,
+    });
+
 
   // currencies + pay hook
     const { currencies } = useCurrencies();
@@ -181,6 +199,15 @@ export default function PledgeFlowMiniPage({ loanId }) {
       );
       setLoanResult(j);
 
+      const dep = j?.data?.response?.deposit || j?.response?.deposit || null;
+
+      const dCode = String(dep?.currency_code || dep?.currency || "").trim().toUpperCase();
+      const dNet = String(dep?.currency_network || dep?.currencyNetwork || "").trim().toUpperCase();
+
+      if (dCode) setCollateralCode(dCode);
+      if (dNet) setCollateralNetwork(dNet);
+
+
       const rep = j?.data?.response?.repayment || j?.response?.repayment || null;
 
       const code = String(rep?.currency_code || "").trim();
@@ -198,6 +225,33 @@ export default function PledgeFlowMiniPage({ loanId }) {
       setLoanLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!loanIdFromUrl) return;
+
+    let cancelled = false;
+
+    const run = async (tries = 0) => {
+      try {
+        await onLoadLoan();
+      } catch (e) {
+        const msg = String(e?.message || "");
+
+        // Firebase is not ready yet 
+        if (!cancelled && msg.includes("No logged in user") && tries < 8) {
+          setTimeout(() => run(tries + 1), 350);
+          return;
+        }
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loanIdFromUrl]);
 
   // OPTIONAL: estimate (for UI/dash only)
   const onEstimate = async () => {
@@ -306,12 +360,20 @@ export default function PledgeFlowMiniPage({ loanId }) {
   };
 
   const canLoad = !loanLoading && loanIdFromUrl;
+
+
+  const isReturnAddressValidated =
+    returnRemoteValid === true && !validatingReturn && !!returnAddress.trim();
+
+
   const canPledge =
     !pledgeLoading &&
     loanIdFromUrl &&
     repayByCode &&
     repayByNetwork &&
-    returnAddress.trim();
+    returnAddress.trim() &&
+    isReturnAddressValidated;
+
 
   const canPay =
     !payLoading &&
@@ -358,7 +420,6 @@ export default function PledgeFlowMiniPage({ loanId }) {
                 <span style={UI.label}>
                   return address (where collateral should be returned)
                 </span>
-                <span style={UI.todo}>TODO: implement validate address</span>
               </div>
               <input
                 value={returnAddress}
@@ -366,6 +427,19 @@ export default function PledgeFlowMiniPage({ loanId }) {
                 placeholder="0x... / btc... / sol..."
                 style={UI.input}
               />
+              <div style={{ fontSize: 12, opacity: 0.9 }}>
+                Validating on: <span style={UI.code}>{collateralCode}/{collateralNetwork || "..."}</span>
+              </div>
+
+              {validatingReturn ? (
+                <div style={{ fontSize: 12, opacity: 0.85 }}>Validating...</div>
+              ) : null}
+
+              {returnAddressError ? <div style={UI.err}>{returnAddressError}</div> : null}
+
+              {returnRemoteValid === true && !returnAddressError ? (
+                <div style={UI.ok}>Address OK</div>
+              ) : null}
             </label>
 
             <div style={{ fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
