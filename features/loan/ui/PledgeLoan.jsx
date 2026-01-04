@@ -11,9 +11,10 @@
 
 import { useMemo, useState } from "react";
 import { getIdToken } from "@/features/loan/services/session";
-import { validateAddress } from "@/features/loan/services/coinrabbit";
+import { useValidateAddress } from "@/features/loan/hooks/useValidateAddress";
 import { usePayRepayment } from "@/features/loan/hooks/usePayRepayment";
 import useCurrencies from "@/features/loan/hooks/useCurrencies";
+import { useRouter } from "next/navigation";
 
 const UI = {
   page: {
@@ -85,18 +86,14 @@ const UI = {
   },
 };
 
-export default function PledgeFlowMiniPage() {
+export default function PledgeFlowMiniPage({ loanId }) {
+  // loanId comes from the URL params (dashboard route)
+  const loanIdFromUrl = String(loanId || "").trim();
 
-    const loanIdFromUrl = String(loanId || "").trim()
+  const router = useRouter();
 
   // where CoinRabbit returns collateral after repayment
     const [returnAddress, setReturnAddress] = useState("");
-
-  // address validation state
-    const [returnErr, setReturnErr] = useState("");
-    const [returnValid, setReturnValid] = useState(null); // null | true | false
-    const [returnValidating, setReturnValidating] = useState(false);
-
 
   // internal auto-filled repayment params (NO UI inputs)
     const [repayByNetwork, setRepayByNetwork] = useState("");
@@ -330,6 +327,26 @@ export default function PledgeFlowMiniPage() {
     <div style={UI.page}>
       <div style={UI.wrap}>
         <h2 style={UI.title}>Pledge Repayment (simple)</h2>
+        {/* back to my loans */}
+        <button
+          type="button"
+          onClick={() => router.push("/dashboard/loans")}
+          style={{
+            padding: "10px 18px",
+            background: "#eee",
+            color: "#444",
+            border: "none",
+            borderRadius: 8,
+            fontWeight: 500,
+            fontSize: 16,
+            cursor: "pointer",
+            boxShadow: "0 1px 4px 0 rgba(0,0,0,0.04)",
+            width: "fit-content",
+          }}
+        >
+          ← Back to My Loans
+        </button>
+
 
         {/* Inputs */}
         <div style={UI.card}>
