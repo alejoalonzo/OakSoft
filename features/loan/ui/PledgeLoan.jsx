@@ -599,6 +599,7 @@ export default function PledgeFlowMiniPage({ loanId }) {
               <LoanStatusLabel
                 loanId={loanIdFromUrl}
                 start={true}
+                track="repayment"
                 stopOnDepositFinished={false}
                 closedLabel="CLOSED"
                 onFinished={() => {

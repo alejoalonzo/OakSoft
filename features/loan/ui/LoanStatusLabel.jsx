@@ -37,6 +37,7 @@ export default function LoanStatusLabel({
   closedLabel = "CLOSED",
   finishedLabel = "FINISHED",
   stopOnDepositFinished = true,
+  track = "deposit",
   onFinished,
 }) {
   const [snapshot, setSnapshot] = useState(null);
@@ -55,12 +56,13 @@ export default function LoanStatusLabel({
     if (!loanId) return "No loanId";
     if (finalText) return finalText;
     if (error) return `Error: ${error}`;
-    if (!start) return "Waiting for collateral tx...";
+    if (!start) return track === "repayment" ? "Waiting for repayment tx..." : "Waiting for collateral tx...";
     if (!snapshot) return "Listening...";
 
     const r = snapshot?.response || {};
     const dep = r?.deposit || {};
     const loan = r?.loan || {};
+    const rep = r?.repayment || {};
 
     const status = r?.status || "-";
     const depActive = dep?.active === true ? "active" : "inactive";
@@ -68,8 +70,17 @@ export default function LoanStatusLabel({
     const depHash = fmtHash(dep?.transaction_hash || dep?.payin_tx?.hash);
     const payoutHash = fmtHash(loan?.payout_tx?.hash);
 
+    const repTx = rep?.transaction_status || "-";
+    const repActive = rep?.active === true ? "active" : "inactive";
+    const repHash = fmtHash(rep?.transaction_hash || rep?.payin_txs?.[0]?.hash);
+    const repAmt = String(rep?.amount_to_repayment || "").trim();
+
+    if (track === "repayment") {
+      return `status=${status} | repayment=${repTx}(${repActive}) tx=${repHash} amt=${repAmt} | payout=${payoutHash}`;
+    }
     return `status=${status} | deposit=${depTx}(${depActive}) tx=${depHash} | payout=${payoutHash}`;
-  }, [loanId, start, snapshot, error, finalText]);
+
+  }, [loanId, start, snapshot, error, finalText, track]);
 
   useEffect(() => {
     // If we already reached a final state, never poll again
@@ -122,7 +133,7 @@ export default function LoanStatusLabel({
     timerRef.current = setInterval(tick, Math.max(3000, Number(pollMs) || 8000));
 
     return () => stopPolling();
-  }, [loanId, start, pollMs, finalText, closedLabel, finishedLabel,stopOnDepositFinished]);
+  }, [loanId, start, pollMs, finalText, closedLabel, finishedLabel,stopOnDepositFinished, onFinished]);
 
   return (
     <div className="text-xs">
