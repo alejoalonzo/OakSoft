@@ -19,6 +19,8 @@ import { useValidateAddress } from "@/features/loan/hooks/useValidateAddress";
 import { usePayRepayment } from "@/features/loan/hooks/usePayRepayment";
 import useCurrencies from "@/features/loan/hooks/useCurrencies";
 import { useRouter } from "next/navigation";
+import LoanStatusLabel from "@/features/loan/ui/LoanStatusLabel";
+
 
 const UI = {
   page: {
@@ -356,10 +358,12 @@ export default function PledgeFlowMiniPage({ loanId }) {
 
   const canPay =
     !payLoading &&
+    !payTxId &&
     payToAddress &&
     finalAmountToSend &&
     repayByCode &&
     repayByNetwork;
+
 
   const canEstimate =
     !estimateLoading && loanIdFromUrl && repayByCode && repayByNetwork;
@@ -367,7 +371,7 @@ export default function PledgeFlowMiniPage({ loanId }) {
   return (
     <div style={UI.page}>
       <div style={UI.wrap}>
-        <h2 style={UI.title}>Pledge Repayment (simple)</h2>
+        <h2 style={UI.title}>Repay your loan</h2>
         {/* back to my loans */}
         <button
           type="button"
@@ -385,45 +389,45 @@ export default function PledgeFlowMiniPage({ loanId }) {
             width: "fit-content",
           }}
         >
-          ← Back to My Loans
+          ← Back to my loans
         </button>
 
 
         {/* Inputs */}
         <div style={UI.card}>
-          <h3 style={UI.h3}>Inputs</h3>
+          <h3 style={UI.h3}>Your details</h3>
 
           <div style={UI.grid}>
             <label>
               <div style={UI.rowLabel}>
                 <span style={UI.label}>
-                  return address (where collateral should be returned)
+                  Where should we return your collateral?
                 </span>
               </div>
               <input
                 value={returnAddress}
                 onChange={(e) => setReturnAddress(e.target.value)}
-                placeholder="0x... / btc... / sol..."
+                placeholder="Paste your wallet address 0x... / btc... / sol..."
                 style={UI.input}
               />
               <div style={{ fontSize: 12, opacity: 0.9 }}>
-                Validating on: <span style={UI.code}>{collateralCode}/{collateralNetwork || "..."}</span>
+                Checking address for: <span style={UI.code}>{collateralCode}/{collateralNetwork || "..."}</span>
               </div>
 
               {validatingReturn ? (
-                <div style={{ fontSize: 12, opacity: 0.85 }}>Validating...</div>
+                <div style={{ fontSize: 12, opacity: 0.85 }}>Checking address…</div>
               ) : null}
 
               {returnAddressError ? <div style={UI.err}>{returnAddressError}</div> : null}
 
               {returnRemoteValid === true && !returnAddressError ? (
-                <div style={UI.ok}>Address OK</div>
+                <div style={UI.ok}>Address looks good</div>
               ) : null}
             </label>
 
             <div style={{ fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
               <div>
-                <b>Repay in:</b>{" "}
+                <b>You will repay in:</b>{" "}
                 <span style={UI.code}>
                   {repayByCode && repayByNetwork
                     ? `${repayByCode} / ${repayByNetwork}`
@@ -431,57 +435,59 @@ export default function PledgeFlowMiniPage({ loanId }) {
                 </span>
               </div>
               <div>
-                <b>Exact amount (from GET loan):</b>{" "}
+                <b>Amount to repay:</b>{" "}
                 <span style={UI.code}>
-                  {finalAmountToSend ? finalAmountToSend : "(create pledge first)"}
+                  {finalAmountToSend ? finalAmountToSend : "(create repayment request first)"}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Step 0 */}
-        <div style={UI.card}>
-          <h3 style={UI.h3}>0) Load loan (auto-fill repay coin/network)</h3>
-          <button
-            onClick={onLoadLoan}
-            disabled={!canLoad}
-            style={UI.btn(canLoad, "purple")}
-          >
-            {loanLoading ? "Loading..." : "Get loan by id"}
-          </button>
+        {/* Step 0 (hidden) */}
+        {false && (
+          <div style={UI.card}>
+            <h3 style={UI.h3}>0) Load loan (auto-fill repay coin/network)</h3>
+            <button
+              onClick={onLoadLoan}
+              disabled={!canLoad}
+              style={UI.btn(canLoad, "purple")}
+            >
+              {loanLoading ? "Loading..." : "Get loan by id"}
+            </button>
 
-          {loanError ? <div style={UI.err}>Loan error: {loanError}</div> : null}
+            {loanError ? <div style={UI.err}>Loan error: {loanError}</div> : null}
 
-          {repaymentFromLoan ? (
-            <div style={{ marginTop: 10, fontSize: 13, lineHeight: 1.5 }}>
-              <div>
-                <b>Pay-to address (send_address):</b>{" "}
-                <span style={UI.code}>
-                  {String(repaymentFromLoan?.send_address || "").trim() || "(not yet)"}
-                </span>
+            {repaymentFromLoan ? (
+              <div style={{ marginTop: 10, fontSize: 13, lineHeight: 1.5 }}>
+                <div>
+                  <b>Pay-to address (send_address):</b>{" "}
+                  <span style={UI.code}>
+                    {String(repaymentFromLoan?.send_address || "").trim() || "(not yet)"}
+                  </span>
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  <b>amount_to_repayment:</b>{" "}
+                  <span style={UI.code}>
+                    {String(repaymentFromLoan?.amount_to_repayment || "").trim() || "(not yet)"}
+                  </span>
+                </div>
               </div>
-              <div style={{ marginTop: 6 }}>
-                <b>amount_to_repayment:</b>{" "}
-                <span style={UI.code}>
-                  {String(repaymentFromLoan?.amount_to_repayment || "").trim() || "(not yet)"}
-                </span>
-              </div>
-            </div>
-          ) : null}
+            ) : null}
 
-          {loanResult ? (
-            <pre style={UI.pre}>{JSON.stringify(loanResult, null, 2)}</pre>
-          ) : null}
-        </div>
+            {loanResult ? (
+              <pre style={UI.pre}>{JSON.stringify(loanResult, null, 2)}</pre>
+            ) : null}
+          </div>
+        )}
 
         {/* Step 1 */}
         <div style={UI.card}>
-          <h3 style={UI.h3}>1) POST pledge (creates repayment operation)</h3>
+          <h3 style={UI.h3}>Step 1 — Create repayment request</h3>
           <p style={UI.hint}>
             ✅ IMPORTANT: we do <b>NOT</b> send <span style={UI.code}>amount</span> in this request.
-            After this, we refresh GET loan to read the exact{" "}
-            <span style={UI.code}>amount_to_repayment</span>.
+            we will show the exact amount to send after this step.{" "}
+            {/* <span style={UI.code}>amount_to_repayment</span>. */}
           </p>
 
           <button
@@ -489,7 +495,7 @@ export default function PledgeFlowMiniPage({ loanId }) {
             disabled={!canPledge}
             style={UI.btn(canPledge, "green")}
           >
-            {pledgeLoading ? "Sending..." : "Create repayment (pledge)"}
+            {pledgeLoading ? "Sending..." : "Get payment details"}
           </button>
 
           {pledgeError ? <div style={UI.err}>Pledge error: {pledgeError}</div> : null}
@@ -517,17 +523,17 @@ export default function PledgeFlowMiniPage({ loanId }) {
 
         {/* Step 2 */}
         <div style={UI.card}>
-          <h3 style={UI.h3}>2) Pay (opens wallet)</h3>
+          <h3 style={UI.h3}>Step 2 — Send payment</h3>
 
           <div style={{ fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
             <div>
-              <b>Send to:</b>{" "}
+              <b>Send to this address:</b>{" "}
               <span style={UI.code}>
-                {payToAddress || "(create pledge first → then GET loan)"}
+                {payToAddress || "(Create repayment request first)"}
               </span>
             </div>
             <div style={{ marginTop: 6 }}>
-              <b>Exact amount:</b>{" "}
+              <b>Send this exact amount:</b>{" "}
               <span style={UI.code}>{finalAmountToSend || "(missing)"}</span>
             </div>
           </div>
@@ -547,17 +553,17 @@ export default function PledgeFlowMiniPage({ loanId }) {
         {/* OPTIONAL: Estimate */}
         <div style={UI.card}>
           <h3 style={UI.h3}>
-            Optional: Pledge estimate (dashboard/UI only)
+            Optional — Estimated costs
           </h3>
           <p style={UI.hint}>
-            This is <b>not required</b> to close the loan. It may fail for tiny residuals (min amount).
+            This is just an estimate. You can skip it.
           </p>
 
           <button
             onClick={() => setShowEstimate((v) => !v)}
             style={UI.btn(true, "gray")}
           >
-            {showEstimate ? "Hide estimate tools" : "Show estimate tools"}
+            {showEstimate ? "Hide estimate tools" : "Show estimate"}
           </button>
 
           {showEstimate ? (
@@ -579,6 +585,31 @@ export default function PledgeFlowMiniPage({ loanId }) {
             </div>
           ) : null}
         </div>
+
+        {/* Step 3: monitor repayment */}
+        {payTxId ? (
+          <div style={UI.card}>
+            <h3 style={UI.h3}>Confirming your payment</h3>
+
+            <div style={{ fontSize: 13, opacity: 0.9 }}>
+              Tx: <span style={UI.code}>{payTxId}</span>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+              <LoanStatusLabel
+                loanId={loanIdFromUrl}
+                start={true}
+                stopOnDepositFinished={false}
+                closedLabel="CLOSED"
+                onFinished={() => {
+                  router.push("/dashboard/loans");
+                  router.refresh();
+                }}
+              />
+            </div>
+          </div>
+        ) : null}
+
       </div>
     </div>
   );

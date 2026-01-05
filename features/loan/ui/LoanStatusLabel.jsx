@@ -36,6 +36,7 @@ export default function LoanStatusLabel({
   pollMs = 8000,
   closedLabel = "CLOSED",
   finishedLabel = "FINISHED",
+  stopOnDepositFinished = true,
   onFinished,
 }) {
   const [snapshot, setSnapshot] = useState(null);
@@ -96,7 +97,7 @@ export default function LoanStatusLabel({
         const resp = data?.response || {};
 
         // 1) Stop if deposit tx is finished (waiting/confirming/finished)
-        if (isDepositFinished(resp)) {
+        if (stopOnDepositFinished && isDepositFinished(resp)) {
           setFinalText(finishedLabel);
           stopPolling();
           onFinished?.(data);
@@ -107,6 +108,7 @@ export default function LoanStatusLabel({
         if (isClosed(resp)) {
           setFinalText(closedLabel);
           stopPolling();
+          onFinished?.(data);
           return;
         }
       } catch (e) {
@@ -120,7 +122,7 @@ export default function LoanStatusLabel({
     timerRef.current = setInterval(tick, Math.max(3000, Number(pollMs) || 8000));
 
     return () => stopPolling();
-  }, [loanId, start, pollMs, finalText, closedLabel, finishedLabel]);
+  }, [loanId, start, pollMs, finalText, closedLabel, finishedLabel,stopOnDepositFinished]);
 
   return (
     <div className="text-xs">
