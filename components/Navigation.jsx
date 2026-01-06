@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import { auth, db } from "@/lib/firebaseClient";
+import { onAuthStateChanged } from "firebase/auth";
+import { collection, query, where, limit, onSnapshot } from "firebase/firestore";
 import UserDisplay from "./UserDisplay";
 import { AppKitButton } from "@reown/appkit/react";
 import { useAppKitAccount } from "@reown/appkit/react";
@@ -13,6 +16,37 @@ export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const { address, isConnected } = useAppKitAccount({ namespace: "eip155" });
+
+  // Estate to control visibility of Dashboard link
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [userId, setUserId] = useState(null);
+
+  // Detect authenticated user (Firebase Auth)
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUserId(u?.uid || null);
+    });
+    return () => unsub();
+  }, []);
+
+  // Check if the user has active/closed loans
+  useEffect(() => {
+    if (!userId) {
+      setShowDashboard(false);
+      return;
+    }
+    // Search for only 1 loan that is ACTIVE, CLOSED, or LIQUIDATED
+    const q = query(
+      collection(db, "loans"),
+      where("uid", "==", userId),
+      where("phase", "in", ["ACTIVE", "CLOSED", "LIQUIDATED"]),
+      limit(1)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setShowDashboard(snap.size > 0);
+    });
+    return () => unsub();
+  }, [userId]);
 
   const isActive = path => {
     return pathname === path;
@@ -249,6 +283,27 @@ export default function Navigation() {
                   >
                     Loans
                   </Link>
+                   {showDashboard && (
+                     <Link
+                       href="/dashboard/loans"
+                       onClick={() => setIsMenuOpen(false)}
+                       className={`block transition-colors uppercase mb-4 mr-10 md:mr-36 cursor-pointer ${
+                         isActive("/dashboard/loans")
+                           ? "text-primary-500"
+                           : "text-white hover:text-primary-500"
+                       }`}
+                       style={{
+                         fontFamily: "var(--font-abhaya-libre), serif",
+                         fontWeight: 800,
+                         fontSize: "18px",
+                         lineHeight: "18px",
+                         letterSpacing: "2.7px",
+                         textAlign: "right",
+                       }}
+                     >
+                       Dashboard
+                     </Link>
+                   )}
                   <Link
                     href="/login"
                     onClick={() => setIsMenuOpen(false)}
