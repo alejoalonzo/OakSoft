@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebaseClient";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
+import LoanZonePill from "@/features/loan/ui/LoanZonePill";
+import useRefreshLoanZones from "@/features/loan/hooks/useRefreshLoanZones";
+import { usePathname } from "next/navigation";
+
+
+
 
 export default function Page() {
   const router = useRouter();
@@ -19,7 +25,16 @@ export default function Page() {
 
 
   const [snapErr, setSnapErr] = useState("");
+  const pathname = usePathname();
 
+
+  // Refresh loan zones
+  useRefreshLoanZones({
+    loans,
+    enabled: !!uid,
+    limit: 10,
+    onlyIfMissing: false,
+  });
 
   // 1) Detect user
   useEffect(() => {
@@ -133,6 +148,7 @@ export default function Page() {
             <div style={{ fontSize: 12, color: "#666" }}>
               status: {l.status || l.coinrabbit?.status || "-"}
             </div>
+            <LoanZonePill zone={l.coinrabbit?.currentZone} showWhenUnknown />
           </div>
 
           <button

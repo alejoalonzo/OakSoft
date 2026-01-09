@@ -65,7 +65,7 @@ export async function GET(req, { params }) {
     // 6) Sync phase/status to Firestore (does not change API response)
     if (ok) {
       const now = Date.now();
-      const resp = data?.response || {};
+      const resp = data?.response || data?.data?.response || {};
 
       const depTx = String(
         resp?.deposit?.transaction_status || ""
@@ -97,6 +97,7 @@ export async function GET(req, { params }) {
             lastSyncedAt: now,
             status: coinrabbitStatus,
             depositTxStatus: resp?.deposit?.transaction_status || null,
+            currentZone: resp?.current_zone ?? null,
           },
         },
         { merge: true }

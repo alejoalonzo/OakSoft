@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
 import { db } from "@/lib/firebaseClient";
 import { doc, onSnapshot } from "firebase/firestore";
+import LoanDangerZoneBar from "@/features/loan/ui/LoanDangerZoneBar";
+
+import { getLoanById } from "@/features/loan/services/coinrabbit";
 
 /**
  * Helpers (safe + UI-friendly)
@@ -74,6 +77,36 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
+  const didRefreshZoneRef = useRef(false);
+
+  const isActive = phase === "ACTIVE";
+
+  useEffect(() => {
+    if (!loanId) return;
+    if (!isActive) return;
+    if (didRefreshZoneRef.current) return;
+
+    let cancelled = false;
+
+    const run = async (tries = 0) => {
+      try {
+        await getLoanById(loanId);
+        didRefreshZoneRef.current = true; 
+      } catch (e) {
+        const msg = String(e?.message || "");
+        if (!cancelled && msg.includes("No logged in user") && tries < 8) {
+          setTimeout(() => run(tries + 1), 350);
+        }
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loanId, isActive]);
+
   useEffect(() => {
     if (!loanId) {
       setLoading(false);
@@ -118,7 +151,7 @@ export default function Page() {
     return () => unsub();
   }, [loanId]);
 
-  const isActive = phase === "ACTIVE";
+  
   const isClosedLike =
     phase === "CLOSED" ||
     phase === "LIQUIDATED" ||
@@ -211,6 +244,11 @@ export default function Page() {
         <div style={{ fontSize: 12, color: "#666" }}>
           phase: {phase || "-"} | status: {status || "-"}
         </div>
+      )}
+
+      {/* ACTIVE: danger zone bar */}
+      {!loading && !err && isActive && (
+        <LoanDangerZoneBar zone={docData?.coinrabbit?.currentZone} />
       )}
 
       {/* ACTIVE: show actions */}
