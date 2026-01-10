@@ -10,8 +10,6 @@ import useRefreshLoanZones from "@/features/loan/hooks/useRefreshLoanZones";
 import { usePathname } from "next/navigation";
 
 
-
-
 export default function Page() {
   const router = useRouter();
 
@@ -23,10 +21,8 @@ export default function Page() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyErr, setHistoryErr] = useState("");
 
-
   const [snapErr, setSnapErr] = useState("");
   const pathname = usePathname();
-
 
   // Refresh loan zones
   useRefreshLoanZones({
@@ -34,6 +30,7 @@ export default function Page() {
     enabled: !!uid,
     limit: 10,
     onlyIfMissing: false,
+    entryKey: pathname,
   });
 
   // 1) Detect user

@@ -10,6 +10,7 @@ export default function useRefreshLoanZones({
   onlyIfMissing = true,
   maxRetries = 8,
   retryMs = 350,
+  entryKey = "",
 } = {}) {
   // done = refreshed successfully
   const doneRef = useRef(new Set());
@@ -74,5 +75,5 @@ export default function useRefreshLoanZones({
     return () => {
       cancelled = true;
     };
-  }, [enabled, loans, limit, onlyIfMissing, maxRetries, retryMs]);
+  }, [enabled, loans, limit, onlyIfMissing, maxRetries, retryMs, entryKey]);
 }
