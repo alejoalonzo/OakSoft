@@ -24,19 +24,12 @@ export default function Page() {
   const [snapErr, setSnapErr] = useState("");
   const pathname = usePathname();
 
-  const [entryKey, setEntryKey] = useState(0);
-
-
-  useEffect(() => {
-    setEntryKey((k) => k + 1); // increment to signal a new entry
-  }, []);
-
   // Refresh loan zones
   useRefreshLoanZones({
     loans,
     enabled: !!uid,
     limit: 10,
-    onlyIfMissing: false,
+    onlyIfMissing: true,
     entryKey: pathname,
   });
 
@@ -68,7 +61,17 @@ export default function Page() {
     const unsub = onSnapshot(
       q,
       (snap) => {
-        const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const items = snap.docs.map((d) => {
+          const data = d.data();
+          console.log("SNAP ACTIVE", {
+            docId: d.id,
+            loanId: data.loanId,
+            zone: data?.coinrabbit?.currentZone,
+            updatedAt: data?.updatedAt,
+          });
+          return { id: d.id, ...data };
+        });
+
         setLoans(items);
         setSnapErr("");
         setLoading(false);
