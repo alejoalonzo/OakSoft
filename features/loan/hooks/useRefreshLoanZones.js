@@ -16,6 +16,7 @@ export default function useRefreshLoanZones({
   const doneRef = useRef(new Set());
   // inFlight = currently refreshing
   const inFlightRef = useRef(new Set());
+  const prevKeyRef = useRef(null);
 
   useEffect(() => {
     if (prevKeyRef.current !== entryKey) {

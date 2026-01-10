@@ -26,6 +26,7 @@ export default function Page() {
 
   const [entryKey, setEntryKey] = useState(0);
 
+
   useEffect(() => {
     setEntryKey((k) => k + 1); // increment to signal a new entry
   }, []);
