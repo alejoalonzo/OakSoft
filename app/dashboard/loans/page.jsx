@@ -24,6 +24,12 @@ export default function Page() {
   const [snapErr, setSnapErr] = useState("");
   const pathname = usePathname();
 
+  const [entryKey, setEntryKey] = useState(0);
+
+  useEffect(() => {
+    setEntryKey((k) => k + 1); // increment to signal a new entry
+  }, []);
+
   // Refresh loan zones
   useRefreshLoanZones({
     loans,

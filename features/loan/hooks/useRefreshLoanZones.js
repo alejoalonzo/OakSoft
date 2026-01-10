@@ -18,6 +18,12 @@ export default function useRefreshLoanZones({
   const inFlightRef = useRef(new Set());
 
   useEffect(() => {
+    if (prevKeyRef.current !== entryKey) {
+      doneRef.current = new Set();
+      inFlightRef.current = new Set();
+      prevKeyRef.current = entryKey;
+    }
+
     if (!enabled) return;
     if (!Array.isArray(loans) || loans.length === 0) return;
 
