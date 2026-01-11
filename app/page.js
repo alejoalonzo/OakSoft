@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-900 w-full">
+    <div className="min-h-screen w-full bg-transparent">
       {/* Title */}
       <div
         className="flex justify-center pt-[60px] mb-[60px]"

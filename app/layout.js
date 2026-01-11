@@ -6,6 +6,7 @@ import "@relayprotocol/relay-kit-ui/styles.css";
 import Navigation from "../components/Navigation";
 import ClientOnly from "../components/ClientOnly";
 import AppKitProvider from "../providers/AppKitProvider";
+import Footer from "../components/Footer";
 import { headers } from "next/headers";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -31,7 +32,7 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${abhayaLibre.variable} antialiased bg-gray-50 dark:bg-gray-900`}
+        className={`${geistSans.variable} ${geistMono.variable} ${abhayaLibre.variable} antialiased`}
         suppressHydrationWarning={true}
       >
         <AppKitProvider cookies={cookies}>
@@ -61,6 +62,7 @@ export default async function RootLayout({ children }) {
           </ClientOnly>
 
           <main className="min-h-screen">{children}</main>
+          <Footer />
         </AppKitProvider>
       </body>
     </html>

@@ -74,50 +74,53 @@ export default function Navigation() {
   }, [isMenuOpen]);
 
   return (
-    <nav className="bg-gray-900 shadow-sm relative">
+    <nav className="bg-transparent shadow-sm relative">
       <div className="w-full">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             {/* Logo */}
-            <Link href="/" className="flex-shrink-0 flex items-center">
-              <span
-                className="hidden md:block font-extrabold leading-[100%] tracking-normal text-right align-middle text-white"
-                style={{
-                  fontFamily: "var(--font-abhaya-libre), serif",
-                  fontSize: "30px",
-                  width: "262px",
-                  height: "35px",
-                  marginTop: "34px",
-                  marginLeft: "43px",
-                  fontWeight: 800,
-                }}
-              >
-                Oaksoft Digital Fund
-              </span>
-              {/* Mobile Logo */}
-              <span
-                className="md:hidden font-extrabold leading-[100%] tracking-normal text-right align-middle text-white"
-                style={{
-                  fontFamily: "var(--font-abhaya-libre), serif",
-                  fontSize: "20px",
-                  width: "175px",
-                  height: "24px",
-                  marginTop: "22px",
-                  marginLeft: "24px",
-                  fontWeight: 800,
-                }}
-              >
-                Oaksoft Digital Fund
-              </span>
-            </Link>
+            {pathname !== "/" && (
+              <Link href="/" className="flex-shrink-0 flex items-center">
+                <span
+                  className="hidden md:block font-extrabold leading-[100%] tracking-normal text-right align-middle text-white"
+                  style={{
+                    fontFamily: "var(--font-abhaya-libre), serif",
+                    fontSize: "30px",
+                    width: "262px",
+                    height: "35px",
+                    marginTop: "34px",
+                    marginLeft: "43px",
+                    fontWeight: 800,
+                  }}
+                >
+                  Oaksoft Digital Fund
+                </span>
+                {/* Mobile Logo */}
+                <span
+                  className="md:hidden font-extrabold leading-[100%] tracking-normal text-right align-middle text-white"
+                  style={{
+                    fontFamily: "var(--font-abhaya-libre), serif",
+                    fontSize: "20px",
+                    width: "175px",
+                    height: "24px",
+                    marginTop: "22px",
+                    marginLeft: "24px",
+                    fontWeight: 800,
+                  }}
+                >
+                  Oaksoft Digital Fund
+                </span>
+              </Link>
+            )}
           </div>
 
           {/* Buttons + Dropdown wrapped in the same ref */}
           <div className="flex items-center gap-3 mr-[43px] mt-[34px] md:mr-[43px] md:mt-[34px]" ref={menuRef}>
             {/* User Display */}
-            <UserDisplay />
+            {/* <UserDisplay /> */}
+            
             {/* <WalletBadge /> */}
-            <AppKitButton />
+            {/* <AppKitButton /> */}
             
             {/* Desktop Button */}
             <button
