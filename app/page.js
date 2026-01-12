@@ -43,7 +43,7 @@ export default function Home() {
             research models. Moreover, we target venture-stage investments
             between $25k – $100K (equity + tokens) and bring differentiated
             value to cap tables – experience, relationships and resources to
-            help them find product-market fit.
+            help them find product-market fit
           </p>
         </div>
       </div>
