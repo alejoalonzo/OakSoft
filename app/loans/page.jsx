@@ -5,8 +5,8 @@ import ConnectWalletButton from "../../components/ConnectWalletButton";
 
 export default function LoansPage() {
   return (
-    <div className="min-h-screen bg-trasparent">
-      {/* Title */}
+    <div className="min-h-screen bg-transparent">
+      {/* Title (se queda igual) */}
       <div
         className="flex justify-center pt-[60px] mb-[60px]"
         style={{
@@ -30,58 +30,84 @@ export default function LoansPage() {
         </h1>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Content Area */}
-        <div className="max-w-6xl mx-auto">
-          {/* Mobile: How it works above widget */}
-          <div className="lg:hidden mb-8">
-            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-6">
-              <h4 className="text-blue-300 font-semibold mb-4 text-lg">How it works:</h4>
-              <ul className="text-blue-200 space-y-2">
-                <li>• Deposit your crypto as collateral</li>
-                <li>• Receive instant loan</li>
-                <li>• Repay to unlock your collateral</li>
-                <li>• No credit checks required</li>
-              </ul>
+      {/* Main content */}
+      <section
+        className="w-full"
+        style={{
+          background: "linear-gradient(0deg, #151A23 0%, #151A23 100%), #FFF",
+        }}
+      >
+        <div className="mx-auto w-full max-w-[1300px] px-4 py-10 lg:px-0">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:grid-rows-[2fr_1fr] lg:gap-10 items-stretch">
+            {/* LEFT - TOP (2/3) */}
+            <div className="lg:col-start-1 lg:row-start-1 h-full">
+              <div className="h-full rounded-2xl border border-red-500/40 bg-red-500/20 p-6">
+                <p className="text-white/90 font-semibold">LEFT / ROW 1 (TOP) — 2/3</p>
+              </div>
             </div>
-          </div>
 
-          {/* Desktop: Widget and How it works side by side */}
-          <div className="lg:grid lg:grid-cols-3 lg:gap-8">
-            {/* Widget takes 2/3 of the width on desktop */}
-            <div className="lg:col-span-2">
+            {/* RIGHT - Widget (spans both rows) */}
+            <div className="lg:col-start-2 lg:row-start-1 lg:row-span-2 h-full">
               <LoanWidget />
             </div>
-            
-            {/* How it works takes 1/3 of the width on desktop, hidden on mobile */}
-            <div className="hidden lg:block">
-              <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-6 h-fit">
-                <h4 className="text-blue-300 font-semibold mb-4 text-lg">How it works:</h4>
-                <ul className="text-blue-200 space-y-3">
-                  <li className="flex items-start">
-                    <span className="text-blue-400 font-bold mr-2">1.</span>
-                    <span>Deposit your crypto as collateral</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-blue-400 font-bold mr-2">2.</span>
-                    <span>Receive instant loan in stablecoins</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-blue-400 font-bold mr-2">3.</span>
-                    <span>Repay to unlock your collateral</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-blue-400 font-bold mr-2">4.</span>
-                    <span>No credit checks required</span>
-                  </li>
-                </ul>
+
+            {/* LEFT - BOTTOM (1/3) */}
+            <div className="lg:col-start-1 lg:row-start-2 h-full">
+              <div className="h-full rounded-2xl border border-green-500/40 bg-green-500/20 p-6">
+                <p className="text-white/90 font-semibold">LEFT / ROW 2 (BOTTOM) — 1/3</p>
+
+                <div className="mt-6">
+                  <ConnectWalletButton />
+                </div>
               </div>
-              <ConnectWalletButton />
             </div>
           </div>
         </div>
-      </div>
+
+        {/* ✅ New Cards Section (same 1300px width) */}
+        <section className="w-full">
+          <div className="mx-auto w-full max-w-[1300px] px-4 pb-12 lg:px-0">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {/* Card 1 */}
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 min-h-[160px]">
+                <div className="h-10 w-10 rounded-xl bg-blue-500/20 border border-blue-500/30 mb-4" />
+                <h3 className="text-white font-semibold">Card 1</h3>
+                <p className="text-white/70 text-sm mt-2">
+                  Placeholder text.
+                </p>
+              </div>
+
+              {/* Card 2 */}
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 min-h-[160px]">
+                <div className="h-10 w-10 rounded-xl bg-purple-500/20 border border-purple-500/30 mb-4" />
+                <h3 className="text-white font-semibold">Card 2</h3>
+                <p className="text-white/70 text-sm mt-2">
+                  Placeholder text.
+                </p>
+              </div>
+
+              {/* Card 3 */}
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 min-h-[160px]">
+                <div className="h-10 w-10 rounded-xl bg-green-500/20 border border-green-500/30 mb-4" />
+                <h3 className="text-white font-semibold">Card 3</h3>
+                <p className="text-white/70 text-sm mt-2">
+                  Placeholder text.
+                </p>
+              </div>
+
+              {/* Card 4 */}
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 min-h-[160px]">
+                <div className="h-10 w-10 rounded-xl bg-red-500/20 border border-red-500/30 mb-4" />
+                <h3 className="text-white font-semibold">Card 4</h3>
+                <p className="text-white/70 text-sm mt-2">
+                  Placeholder text.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </section>
     </div>
   );
 }
-
