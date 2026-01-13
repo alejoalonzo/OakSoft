@@ -5,7 +5,7 @@ import ConnectWalletButton from "../../components/ConnectWalletButton";
 
 export default function LoansPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-trasparent">
       {/* Title */}
       <div
         className="flex justify-center pt-[60px] mb-[60px]"
