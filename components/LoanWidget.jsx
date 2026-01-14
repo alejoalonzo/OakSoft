@@ -100,15 +100,33 @@ export default function LoanWidget() {
 
 
   return (
-    <div className="bg-gradient-to-br from-gray-800 to-gray-850 rounded-2xl border border-white/20 p-10 shadow-2xl backdrop-blur-sm">
+    <div 
+      className="p-10"
+      style={{
+        borderRadius: '12.917px',
+        border: '2.348px solid rgba(255, 255, 255, 0.10)',
+        background: 'linear-gradient(149deg, rgba(255, 255, 255, 0.05) 3.34%, rgba(25, 120, 237, 0.10) 102.38%)',
+        boxShadow: '0 14.091px 137.856px 0 rgba(0, 0, 0, 0.25)',
+        backdropFilter: 'blur(20.138256072998047px)'
+      }}
+    >
       <div className="space-y-8">
-        <h3 className="text-2xl font-bold text-white tracking-tight">Loan Calculator</h3>
+        <h3 
+          className="font-medium tracking-tight text-white text-base sm:text-[28px]"
+          style={{
+            fontFamily: '"Gramatika Trial", "Helvetica", "Arial", sans-serif',
+            fontStyle: 'normal',
+            lineHeight: 'normal'
+          }}
+        >
+          Loan Calculator
+        </h3>
 
         <div className="space-y-6">
           {/* ===== Collateral (with Amount connected) ===== */}
           <div>
-            <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">Collateral</label>
-            <div className="flex flex-col sm:flex-row bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-visible focus-within:border-[#95E100] transition-all duration-300 hover:border-gray-500 gap-2 sm:gap-0">
+            <label className="block text-sm  text-[#E6EDE4] mb-3 tracking-wide">Collateral</label>
+            <div className="flex flex-col sm:flex-row bg-[#161B26] border border-gray-600/60 rounded-xl overflow-visible focus-within:border-[#95E100] transition-all duration-300 hover:border-gray-500 gap-2 sm:gap-0">
               <input
                 type="number"
                 value={amount}
@@ -135,8 +153,8 @@ export default function LoanWidget() {
 
           {/* ===== Loan token + result ===== */}
           <div>
-            <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">Loan</label>
-            <div className="flex flex-col sm:flex-row bg-gray-700/50 border border-gray-600/60 rounded-xl overflow-visible gap-2 sm:gap-0">
+            <label className="block text-sm  text-[#E6EDE4] mb-3 tracking-wide">Loan</label>
+            <div className="flex flex-col sm:flex-row bg-[#161B26] border border-gray-600/60 rounded-xl overflow-visible gap-2 sm:gap-0">
               <div className="flex-1 min-w-0 px-5 py-4 bg-transparent text-white font-bold text-xl flex items-center">
                 {estLoading ? "(...)" : estimate ? `${fmt(estimate.amount_to, 2)} ${selectedBorrow?.code || ""}` : "0"}
               </div>
@@ -162,47 +180,47 @@ export default function LoanWidget() {
             </p>
             {estErr && <p className="text-xs text-red-400 mt-2 ml-1">{estErr}</p>}
           </div>
-
-          {/* ===== LTV ===== */}
+          {/* ===== LTV Selection ===== */}
           <div>
-            <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">
-              LTV Ratio (Loan-to-Value)
-            </label>
-            <div className="bg-gray-700/30 rounded-xl p-4 border border-gray-600/40">
-              <div className="grid grid-cols-4 gap-3">
-                {["50", "65", "80", "90"].map((ltv) => (
-                  <button
+                <label className="block text-sm  text-[#E6EDE4] mb-3 tracking-wide">
+                  LTV Ratio (Loan-to-Value)
+                </label>
+                <div className="bg-transparent rounded-xl ">
+                  <div className="grid grid-cols-4 gap-3">
+                  {["50", "65", "80", "90"].map((ltv) => (
+                    <button
                     key={ltv}
                     onClick={() => setSelectedLTV(ltv)}
-                    className={`py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-300 transform hover:scale-105 ${
+                    className={`py-4 px-4 rounded-lg text-sm border border-gray-600/60 transition-all duration-300 transform hover:scale-105 ${
                       selectedLTV === ltv
-                        ? "bg-[#95E100] text-gray-900"
-                        : "bg-gray-600/60 text-gray-300 hover:bg-[#95E100]/80 hover:text-gray-900"
+                      ? "bg-[#1978ED] text-white"
+                      : "bg-[#161B26] text-gray-300 hover:bg-[#1978ED]/80"
                     }`}
-                  >
+                    >
                     {ltv}%
-                  </button>
-                ))}
-              </div>
-            </div>
+                    </button>
+                  ))}
+                  </div>
+                </div>
           </div>
 
           {/* ===== APR from estimate ===== */}
           <div>
-            <label className="block text-sm font-semibold text-gray-200 mb-3 tracking-wide">Choose APR</label>
-            <div className="bg-gray-700/30 rounded-xl p-4 border border-gray-600/40">
+            <label className="block text-sm text-[#E6EDE4] mb-3 tracking-wide">Choose APR</label>
+
+            <div className="bg-transparent rounded-xl">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   onClick={() => setSelectedDuration("long")}
                   className={`p-5 rounded-xl font-medium text-sm transition-all duration-300 text-left transform hover:scale-105 ${
                     selectedDuration === "long"
-                      ? "border-2 border-[#95E100] bg-gray-600/40 text-white"
-                      : "border-2 border-gray-500/60 bg-gray-600/30 text-gray-300 hover:border-[#95E100]/60 hover:text-white"
+                      ? "border border-[#95E100] bg-gray-600/40 text-white"
+                      : "border border-gray-500/60 bg-[#161B26] text-gray-300 hover:border-[#95E100]/60 hover:text-white hover:bg-[#1B2230]"
                   }`}
                 >
                   <div className="flex justify-between items-center">
                     <div>
-                      <div className="font-bold mb-1">Long Term</div>
+                      <div className="mb-1">Long Term</div>
                       <div className="text-xs opacity-80">Unlimited time</div>
                       {estimate && (
                         <div className="text-xs opacity-70 mt-1">
@@ -210,8 +228,9 @@ export default function LoanWidget() {
                         </div>
                       )}
                     </div>
+
                     <div className="text-right">
-                      <div className="font-bold mb-1">APR</div>
+                      <div className="mb-1">APR</div>
                       <div className="text-xs">
                         {estimate ? `${fmt(estimate.fixed_apr_unlimited_loan ?? estimate.interest_percent ?? 0, 2)}%` : "(...)"}
                       </div>
@@ -223,13 +242,13 @@ export default function LoanWidget() {
                   onClick={() => setSelectedDuration("short")}
                   className={`p-5 rounded-xl font-medium text-sm transition-all duration-300 text-left transform hover:scale-105 ${
                     selectedDuration === "short"
-                      ? "border-2 border-[#95E100] bg-gray-600/40 text-white"
-                      : "border-2 border-gray-500/60 bg-gray-600/30 text-gray-300 hover:border-[#95E100]/60 hover:text-white"
+                      ? "border border-[#95E100] bg-gray-600/40 text-white"
+                      : "border border-gray-500/60 bg-[#161B26] text-gray-300 hover:border-[#95E100]/60 hover:text-white hover:bg-[#1B2230]"
                   }`}
                 >
                   <div className="flex justify-between items-center">
                     <div>
-                      <div className="font-bold mb-1">Short Term</div>
+                      <div className="mb-1">Short Term</div>
                       <div className="text-xs opacity-80">30 days</div>
                       {estimate && (
                         <div className="text-xs opacity-70 mt-1">
@@ -237,8 +256,9 @@ export default function LoanWidget() {
                         </div>
                       )}
                     </div>
+
                     <div className="text-right">
-                      <div className="font-bold mb-1">APR</div>
+                      <div className="mb-1">APR</div>
                       <div className="text-xs">
                         {estimate ? `${fmt(estimate.fixed_apr_fixed_loan ?? estimate.interest_percent ?? 0, 2)}%` : "(...)"}
                       </div>
@@ -255,6 +275,7 @@ export default function LoanWidget() {
               <span>Liquidation: {estimate?.down_limit ? fmt(estimate.down_limit, 2) : "-"}</span>
             </div>
           </div>
+
         </div>
 
         {/* Button Create (get loan) (UI) */}

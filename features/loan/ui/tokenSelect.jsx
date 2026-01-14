@@ -6,7 +6,7 @@ export default function TokenSelect({
   list = [],
   value = null,                     
   onChange,                         
-  placeholder = "Seleccionar token…",
+  placeholder = "Select token…",
   hideItem,                         
   getIcon,                          
   disabled = false,
@@ -142,14 +142,14 @@ export default function TokenSelect({
         onKeyDown={onButtonKeyDown}
         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all
         ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:bg-gray-600/20"}
-        bg-transparent text-white`}
+        bg-[#323841] text-[#E6EDE4]`}
       >
         {value ? (
           <>
             {tokenImg(value)}
             <div className="flex items-center gap-2 flex-1 text-left">
               <span className="font-medium">{value.code}</span>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-medium text-white bg-gray-600">
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-medium text-white" style={{backgroundColor: '#151A23'}}>
                 {value.network}
               </span>
             </div>
@@ -214,8 +214,8 @@ export default function TokenSelect({
                   {tokenImg(item)}
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-white">{item.code}</span>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-gray-700 text-gray-200">{item.network}</span>
+                      <span className="text-[#E6EDE4]">{item.code}</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] text-white" style={{backgroundColor: '#151A23'}}>{item.network}</span>
                     </div>
                     {item?.name && (
                       <div className="text-[11px] text-gray-400">{item.name}</div>
