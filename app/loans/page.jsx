@@ -4,9 +4,38 @@ import LoanWidget from "../../components/LoanWidget";
 import ConnectWalletButton from "../../components/ConnectWalletButton";
 
 export default function LoansPage() {
+
+
+  const cards = [
+    {
+      icon: "/assets/coins.svg",
+      title: "Buy more crypto",
+      description:
+        "Tired of waiting endlessly for the all-time-high rate of your favorite coin? Keep holding your crypto and get liquidity to buy even more crypto without any hesitation.",
+    },
+    {
+      icon: "/assets/calculator.svg",
+      title: "Optimize taxes",
+      description:
+        "Maximize your tax efficiency. Getting a crypto loan and its spending - are non-taxable events, because they do not generate direct earnings.",
+    },
+    {
+      icon: "/assets/house.svg",
+      title: "Make a huge purchase",
+      description:
+        "Don't put your dreams on hold. Leverage your crypto and put the cash towards a major expense. Buy a house or a car, travel to a new place or pay for studies.",
+    },
+    {
+      icon: "/assets/arrowup.svg",
+      title: "Invest in your business",
+      description:
+        "Reinvest your crypto holdings and make your company grow. Cover operational expenses, pay employees on time, or even buy another company.",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-transparent">
-      {/* Title (se queda igual) */}
+      {/* Title */}
       <div
         className="flex justify-center pt-[60px] mb-[60px]"
         style={{
@@ -127,41 +156,23 @@ export default function LoansPage() {
         <section className="w-full">
           <div className="mx-auto w-full max-w-[1300px] px-4 pb-12 lg:px-0">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {/* Card 1 */}
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 min-h-[160px]">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/20 border border-blue-500/30 mb-4" />
-                <h3 className="text-white font-semibold">Card 1</h3>
-                <p className="text-white/70 text-sm mt-2">
-                  Placeholder text.
-                </p>
-              </div>
+              {cards.map((card, idx) => (
+                <div
+                  key={idx}
+                  className="bg-[#161B26] shadow-[-6px_-4px_10.3px_0_rgba(75,84,98,0.20),_0_4px_20.6px_0_rgba(0,0,0,0.50)] p-[30px_25px] flex flex-col items-start gap-[18.74px] flex-1 rounded-2xl h-auto lg:aspect-square"
+                >
+                  <div className="flex items-center gap-4">
+                    <img src={card.icon} alt={card.title} className="w-[50px] h-[50px]" />
+                    <h3 className="text-white font-['Gramatika_Trial','Helvetica','Arial','sans-serif'] font-medium text-[18px] md:text-[24px] leading-[25.8px]">
+                      {card.title}
+                    </h3>
+                  </div>
 
-              {/* Card 2 */}
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 min-h-[160px]">
-                <div className="h-10 w-10 rounded-xl bg-purple-500/20 border border-purple-500/30 mb-4" />
-                <h3 className="text-white font-semibold">Card 2</h3>
-                <p className="text-white/70 text-sm mt-2">
-                  Placeholder text.
-                </p>
-              </div>
-
-              {/* Card 3 */}
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 min-h-[160px]">
-                <div className="h-10 w-10 rounded-xl bg-green-500/20 border border-green-500/30 mb-4" />
-                <h3 className="text-white font-semibold">Card 3</h3>
-                <p className="text-white/70 text-sm mt-2">
-                  Placeholder text.
-                </p>
-              </div>
-
-              {/* Card 4 */}
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 min-h-[160px]">
-                <div className="h-10 w-10 rounded-xl bg-red-500/20 border border-red-500/30 mb-4" />
-                <h3 className="text-white font-semibold">Card 4</h3>
-                <p className="text-white/70 text-sm mt-2">
-                  Placeholder text.
-                </p>
-              </div>
+                  <p className="text-white font-['Gramatika_Trial','Helvetica','Arial','sans-serif']  text-[15px] leading-[24px] tracking-[0.169px]">
+                    {card.description}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
