@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { auth, db } from "@/lib/firebaseClient";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, query, where, limit, onSnapshot } from "firebase/firestore";
+import ConnectWalletButton from "./ConnectWalletButton";
 // import UserDisplay from "./UserDisplay";
 // import { AppKitButton } from "@reown/appkit/react";
 // import { useAppKitAccount } from "@reown/appkit/react";
@@ -304,6 +305,10 @@ export default function Navigation() {
                         Login
                       </MenuLink>
                     )}
+
+                    <div className="mt-6 flex justify-end">
+                      <ConnectWalletButton />
+                    </div>
                   </div>
                 </div>
               </>
