@@ -17,7 +17,7 @@ export default function LoanWidget() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   // ===== Load currencies (deposit + borrow) =====
-   const {
+  const {
     currencies,
     depositList,
     borrowList,
@@ -101,7 +101,7 @@ export default function LoanWidget() {
 
   return (
     <div 
-      className="p-10"
+      className="px-4 py-10 md:p-10"
       style={{
         borderRadius: '12.917px',
         border: '2.348px solid rgba(255, 255, 255, 0.10)',
