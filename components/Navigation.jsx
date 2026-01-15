@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { auth, db } from "@/lib/firebaseClient";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, query, where, limit, onSnapshot } from "firebase/firestore";
 // import UserDisplay from "./UserDisplay";
 // import { AppKitButton } from "@reown/appkit/react";
@@ -13,6 +13,7 @@ import { collection, query, where, limit, onSnapshot } from "firebase/firestore"
 
 export default function Navigation() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -72,10 +73,9 @@ export default function Navigation() {
   // -------------------------
   // ✅ Menu link styling (ONE place)
   // -------------------------
-  const MENU_RIGHT_MARGIN = "mr-[39px] md:mr-[79px] lg:mr-[144px]";
+  const MENU_RIGHT_PADDING = "pr-[39px] md:pr-[79px] lg:pr-[144px]";
 
-  const linkBase =
-    `block transition-colors uppercase cursor-pointer text-right ${MENU_RIGHT_MARGIN}`;
+  const linkBase = "block transition-colors uppercase cursor-pointer text-right";
 
   const linkActive = "text-primary-500";
   const linkInactive = "text-white hover:text-primary-500";
@@ -89,13 +89,16 @@ export default function Navigation() {
     textAlign: "right",
   };
 
-  const MenuLink = ({ href, children, isLast = false }) => {
+  const MenuLink = ({ href, children, onClick, isLast = false }) => {
     const active = isActive(href);
 
     return (
       <Link
         href={href}
-        onClick={() => setIsMenuOpen(false)}
+        onClick={(e) => {
+          setIsMenuOpen(false);
+          onClick?.(e);
+        }}
         className={`${linkBase} ${active ? linkActive : linkInactive} ${
           isLast ? "" : "mb-4"
         }`}
@@ -104,6 +107,12 @@ export default function Navigation() {
         {children}
       </Link>
     );
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/login");
+    router.refresh();
   };
 
   return (
@@ -268,7 +277,7 @@ export default function Navigation() {
 
                 {/* Menu dropdown */}
                 <div className="absolute top-16 right-0 bg-transparent rounded-lg z-50">
-                  <div className="py-4">
+                  <div className={`py-4 ${MENU_RIGHT_PADDING}`}>
                     <MenuLink href="/">Home</MenuLink>
                     <MenuLink href="/about">About</MenuLink>
                     <MenuLink href="/strategies">Strategies</MenuLink>
@@ -279,9 +288,22 @@ export default function Navigation() {
                       <MenuLink href="/dashboard/loans">Dashboard</MenuLink>
                     )}
 
-                    <MenuLink href="/login" isLast>
-                      Login
-                    </MenuLink>
+                    {userId ? (
+                      <MenuLink
+                        href="/login"
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          await handleLogout();
+                        }}
+                        isLast
+                      >
+                        Logout
+                      </MenuLink>
+                    ) : (
+                      <MenuLink href="/login" isLast>
+                        Login
+                      </MenuLink>
+                    )}
                   </div>
                 </div>
               </>

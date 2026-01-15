@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -8,8 +8,12 @@ import {
 import { auth } from "@/lib/firebaseClient";
 import { useAuth } from "@/providers/AuthProvider";
 import { signInWithGoogle } from "@/features/auth/googleSignIn";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+
+  const router = useRouter();
+
   const { user, loading, logout } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -19,6 +23,7 @@ export default function LoginPage() {
 
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
 
   if (loading) return null;
 
@@ -50,6 +55,7 @@ export default function LoginPage() {
     setBusy(true);
     try {
       await createUserWithEmailAndPassword(auth, email, pass);
+      router.replace("/dashboard/loans");
     } catch (e) {
       console.error("Firebase signup error:", e.code, e.message, e);
 
@@ -85,6 +91,7 @@ export default function LoginPage() {
     setBusy(true);
     try {
       await signInWithEmailAndPassword(auth, email, pass);
+      router.replace("/dashboard/loans");
     } catch (e) {
       if (
         e.code === "auth/user-not-found" ||
@@ -110,6 +117,7 @@ export default function LoginPage() {
 
     try {
       await signInWithGoogle();
+      router.replace("/dashboard/loans");
     } catch (e) {
       const code = e?.code;
 
