@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { fmt } from "../utils/formatting";
 
 export default function ConfirmLoanModalView({
@@ -41,7 +42,13 @@ export default function ConfirmLoanModalView({
   collateralIcon,
   borrowIcon,
 }) {
-  if (!open) return null;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!open || !mounted) return null;
 
   const hasSummary = !!summary;
 
@@ -65,9 +72,9 @@ export default function ConfirmLoanModalView({
     return fmt(num, Math.abs(num) >= 1 ? 2 : 4);
   };
 
-  return (
+  const modal = (
     <div
-      className="fixed inset-0 flex items-center justify-center z-50"
+      className="fixed inset-0 flex items-center justify-center z-[9999]"
       style={{
         background: "rgba(0, 0, 0, 0.50)",
         backdropFilter: "blur(14.899999618530273px)",
@@ -346,4 +353,6 @@ export default function ConfirmLoanModalView({
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

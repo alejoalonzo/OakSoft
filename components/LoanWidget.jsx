@@ -106,7 +106,7 @@ export default function LoanWidget() {
       className="px-4 py-10 md:p-10"
       style={{
         borderRadius: '12.917px',
-        border: '2.348px solid rgba(255, 255, 255, 0.10)',
+        border: '1.348px solid rgba(255, 255, 255, 0.10)',
         background: 'linear-gradient(149deg, rgba(255, 255, 255, 0.05) 3.34%, rgba(25, 120, 237, 0.10) 102.38%)',
         boxShadow: '0 14.091px 137.856px 0 rgba(0, 0, 0, 0.25)',
         backdropFilter: 'blur(20.138256072998047px)'
