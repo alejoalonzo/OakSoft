@@ -75,7 +75,7 @@ export default function ConfirmLoanModalView({
       }}
     >
       <div
-        className="bg-white rounded-2xl p-6 sm:p-8 max-w-lg w-full text-gray-900 shadow-2xl mx-4 sm:mx-0 max-w-[620px] sm:w-[620px] m:h-[836px] overflow-y-auto"
+        className="relative bg-white rounded-2xl p-6 sm:p-8 max-w-lg w-full text-gray-900 shadow-2xl mx-4 sm:mx-0 max-w-[620px] sm:w-[620px] m:h-[836px] overflow-y-auto"
         style={{
           border: "1px solid rgba(255, 255, 255, 0.10)",
           background:
@@ -84,6 +84,16 @@ export default function ConfirmLoanModalView({
           WebkitBackdropFilter: "blur(31.149999618530273px)", // Safari
         }}
       >
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={onClose}
+          disabled={confirmingOrPaying}
+          className="absolute right-4 top-4 sm:right-6 sm:top-6 w-9 h-9 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span className="text-lg leading-none">×</span>
+        </button>
+
         <h2 className="text-white text-2xl  mb-2">Confirm Your Loan</h2>
 
         {loadingFresh && (
@@ -103,19 +113,19 @@ export default function ConfirmLoanModalView({
 
         {hasSummary ? (
           <>
-            <div className="bg-transparent rounded-xl mb-6 w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="bg-transparent rounded-xl mb-3 w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
               {/* ===== Loan + Collateral (display-only, widget look) ===== */}
-              <div className="space-y-6 mb-6 w-full">
+              <div className="space-y-6 mb-4 w-full">
                 {/* ===== Loan (first) ===== */}
                 <div className="w-full">
-                  <label className="block text-sm text-[#E6EDE4] mb-3 tracking-wide">
+                  <label className="block text-sm text-[#E6EDE4] mb-2 tracking-wide">
                     Loan
                   </label>
 
                   <div className="w-full flex flex-row items-stretch bg-[#161B26] border border-[#1F242F] rounded-xl overflow-hidden">
                     {/* Left: amount ONLY */}
-                    <div className="flex-1 min-w-0 px-5 py-4 bg-transparent text-white font-normal text-lg flex items-center whitespace-nowrap truncate">
+                    <div className="flex-1 min-w-0 px-5 py-2 bg-transparent text-white font-normal text-lg flex items-center whitespace-nowrap truncate">
                       {fmt(summary.loanAmount, 2)}
                     </div>
 
@@ -124,8 +134,8 @@ export default function ConfirmLoanModalView({
                       <div className="w-px bg-[#1F242F]" />
 
                       {/* Right: icon + token + network label */}
-                      <div className="basis-[180px] sm:basis-[280px] min-w-0 p-2">
-                        <div className="h-full bg-[#323841] rounded-2xl px-4 py-4">
+                      <div className="basis-[180px] sm:basis-[280px] min-w-0 p-1">
+                        <div className="h-full bg-[#323841] rounded-2xl px-4 py-2">
                           <div className="w-full flex items-center gap-3 select-none cursor-default">
                             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden shrink-0">
                               {borrowIcon ? (
@@ -155,13 +165,13 @@ export default function ConfirmLoanModalView({
 
                 {/* ===== Collateral (second) ===== */}
                 <div className="w-full">
-                  <label className="block text-sm text-[#E6EDE4] mb-3 tracking-wide">
+                  <label className="block text-sm text-[#E6EDE4] mb-2 tracking-wide">
                     Collateral
                   </label>
 
                   <div className="w-full flex flex-row items-stretch bg-[#161B26] border border-[#1F242F] rounded-xl overflow-hidden">
                     {/* Left: amount ONLY */}
-                    <div className="flex-1 min-w-0 px-5 py-4 bg-transparent text-white font-normal text-lg flex items-center whitespace-nowrap truncate">
+                    <div className="flex-1 min-w-0 px-5 py-2 bg-transparent text-white font-normal text-lg flex items-center whitespace-nowrap truncate">
                       {fmt(summary.collateralAmount, 6)}
                     </div>
 
@@ -170,8 +180,8 @@ export default function ConfirmLoanModalView({
                       <div className="w-px bg-[#1F242F]" />
 
                       {/* Right: icon + token + network label */}
-                      <div className="basis-[180px] sm:basis-[280px] min-w-0 p-2">
-                        <div className="h-full bg-[#323841] rounded-2xl px-4 py-4">
+                      <div className="basis-[180px] sm:basis-[280px] min-w-0 p-1">
+                        <div className="h-full bg-[#323841] rounded-2xl px-4 py-2">
                           <div className="w-full flex items-center gap-3 select-none cursor-default">
                             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden shrink-0">
                               {collateralIcon ? (
@@ -247,25 +257,41 @@ export default function ConfirmLoanModalView({
             />
 
             <div className="mt-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Payout address
-              </label>
-              <p className="text-xs text-gray-500 mb-2">
-                We will send <span className="font-semibold">{summary.borrowCode}</span>{" "}
-                {summary.borrowNetwork ? (
-                  <>
-                    on <span className="font-semibold">{summary.borrowNetwork}</span>{" "}
-                  </>
-                ) : null}
-                to this address.
-              </p>
+              <div className="flex items-center gap-2 mb-2">
+                <label className="block text-sm font-normal text-[#E6EDE4]">
+                  Your {summary.borrowCode} payout address
+                </label>
+
+                <div className="relative group">
+                  <button
+                    type="button"
+                    aria-label="Payout address info"
+                    className="w-6 h-6 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 text-xs leading-none hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    i
+                  </button>
+
+                  <div
+                    className="pointer-events-none absolute left-0 top-full mt-2 w-[280px] rounded-xl border border-white/10 bg-[#0F1420]/95 px-3 py-2 text-xs text-white shadow-2xl opacity-0 translate-y-1 transition-all duration-150 group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:translate-y-0 z-10"
+                  >
+                    We will send <span className="font-semibold">{summary.borrowCode}</span>{" "}
+                    {summary.borrowNetwork ? (
+                      <>
+                        on <span className="font-semibold">{summary.borrowNetwork}</span>{" "}
+                      </>
+                    ) : null}
+                    to this address.
+                  </div>
+                </div>
+              </div>
 
               <input
                 type="text"
                 value={address}
                 onChange={(e) => onAddressChange(e.target.value)}
                 placeholder="Wallet address"
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl text-sm bg-[#161B26] text-white placeholder-white/50 caret-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ border: "1.174px solid #1F242F" }}
               />
 
               <div className="mt-1 flex items-center justify-between">
@@ -279,8 +305,8 @@ export default function ConfirmLoanModalView({
                 </div>
 
                 {!validating && remoteValid === true && (
-                  <div className="flex items-center gap-1 text-green-600 text-xs font-semibold">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
+                  <div className="flex items-center gap-1 text-[#95E100] text-xs font-semibold">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-transparent border border-[#95E100]">
                       ✓
                     </span>
                     Valid
@@ -290,22 +316,15 @@ export default function ConfirmLoanModalView({
             </div>
           </>
         ) : (
-          <p className="text-sm text-gray-600 mb-4">Loading loan details...</p>
+          <p className="text-sm text-white mb-4">Loading loan details...</p>
         )}
 
         <div className="mt-4">
           {!txId ? (
-            <div className="flex justify-end gap-3">
+            <div className="w-full">
               <button
-                className="px-4 py-2 text-sm rounded-lg border border-gray-300"
-                onClick={onClose}
-                disabled={confirmingOrPaying}
-              >
-                Cancel
-              </button>
-
-              <button
-                className="px-5 py-2 text-sm rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-60"
+                className="w-full px-4 py-3 text-sm rounded-xl text-[#0B0F16] font-semibold disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ background: "#95E100" }}
                 disabled={!isAddressValid || !loanId || confirmingOrPaying}
                 onClick={onConfirm}
               >
