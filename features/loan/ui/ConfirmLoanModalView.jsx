@@ -36,15 +36,55 @@ export default function ConfirmLoanModalView({
 
   // Optional content (so the view stays UI-only)
   statusContent,
+
+  // Icons (not used currently)
+  collateralIcon,
+  borrowIcon,
 }) {
   if (!open) return null;
 
   const hasSummary = !!summary;
 
+  const duration =
+    summary?.duration ??
+    summary?.selectedDuration ??
+    (summary?.lifetime != null
+      ? Number(summary.lifetime) === 1
+        ? "long"
+        : "short"
+      : null);
+
+  const durationLabel =
+    summary?.durationLabel ??
+    (duration === "long" ? "Long term" : duration === "short" ? "Short term" : "-");
+
+  const fmtCompact = (n) => {
+    if (n == null || n === "") return "-";
+    const num = Number(n);
+    if (!Number.isFinite(num)) return String(n);
+    return fmt(num, Math.abs(num) >= 1 ? 2 : 4);
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-lg w-full text-gray-900 shadow-2xl">
-        <h2 className="text-2xl font-bold mb-2">Confirm your loan</h2>
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{
+        background: "rgba(0, 0, 0, 0.50)",
+        backdropFilter: "blur(14.899999618530273px)",
+        WebkitBackdropFilter: "blur(14.899999618530273px)", // Safari
+      }}
+    >
+      <div
+        className="bg-white rounded-2xl p-6 sm:p-8 max-w-lg w-full text-gray-900 shadow-2xl mx-4 sm:mx-0 max-w-[620px] sm:w-[620px] m:h-[836px] overflow-y-auto"
+        style={{
+          border: "1px solid rgba(255, 255, 255, 0.10)",
+          background:
+            "linear-gradient(149deg, rgba(255, 255, 255, 0.05) 3.34%, rgba(25, 120, 237, 0.10) 102.38%)",
+          backdropFilter: "blur(31.149999618530273px)",
+          WebkitBackdropFilter: "blur(31.149999618530273px)", // Safari
+        }}
+      >
+        <h2 className="text-white text-2xl  mb-2">Confirm Your Loan</h2>
 
         {loadingFresh && (
           <p className="text-xs text-gray-500 mb-2">Refreshing loan status...</p>
@@ -63,59 +103,148 @@ export default function ConfirmLoanModalView({
 
         {hasSummary ? (
           <>
-            <div className="bg-gray-100 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <div className="text-xs font-semibold text-gray-500">Your collateral</div>
-                <div className="text-lg font-bold">
-                  {fmt(summary.collateralAmount, 6)} {summary.collateralCode}
+            <div className="bg-transparent rounded-xl mb-6 w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+              {/* ===== Loan + Collateral (display-only, widget look) ===== */}
+              <div className="space-y-6 mb-6 w-full">
+                {/* ===== Loan (first) ===== */}
+                <div className="w-full">
+                  <label className="block text-sm text-[#E6EDE4] mb-3 tracking-wide">
+                    Loan
+                  </label>
+
+                  <div className="w-full flex flex-row items-stretch bg-[#161B26] border border-[#1F242F] rounded-xl overflow-hidden">
+                    {/* Left: amount ONLY */}
+                    <div className="flex-1 min-w-0 px-5 py-4 bg-transparent text-white font-normal text-lg flex items-center whitespace-nowrap truncate">
+                      {fmt(summary.loanAmount, 2)}
+                    </div>
+
+                    {/* Right group (divider + info), kept at the far right */}
+                    <div className="ml-auto flex items-stretch shrink-0">
+                      <div className="w-px bg-[#1F242F]" />
+
+                      {/* Right: icon + token + network label */}
+                      <div className="basis-[180px] sm:basis-[280px] min-w-0 p-2">
+                        <div className="h-full bg-[#323841] rounded-2xl px-4 py-4">
+                          <div className="w-full flex items-center gap-3 select-none cursor-default">
+                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                              {borrowIcon ? (
+                                <img src={borrowIcon} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-xs font-nolmal">
+                                  {(summary.borrowCode || "?").slice(0, 1)}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex items-center justify-end gap-2">
+                              <div className="min-w-0 text-white font-normal leading-none truncate">
+                                {summary.borrowCode}
+                              </div>
+
+                              <span className="inline-flex items-center rounded-md border border-white/10 bg-[#151A23] px-2 py-0.5 text-[11px] text-white/70 whitespace-nowrap">
+                                {summary.borrowNetwork || "Network"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ===== Collateral (second) ===== */}
+                <div className="w-full">
+                  <label className="block text-sm text-[#E6EDE4] mb-3 tracking-wide">
+                    Collateral
+                  </label>
+
+                  <div className="w-full flex flex-row items-stretch bg-[#161B26] border border-[#1F242F] rounded-xl overflow-hidden">
+                    {/* Left: amount ONLY */}
+                    <div className="flex-1 min-w-0 px-5 py-4 bg-transparent text-white font-normal text-lg flex items-center whitespace-nowrap truncate">
+                      {fmt(summary.collateralAmount, 6)}
+                    </div>
+
+                    {/* Right group (divider + info), kept at the far right */}
+                    <div className="ml-auto flex items-stretch shrink-0">
+                      <div className="w-px bg-[#1F242F]" />
+
+                      {/* Right: icon + token + network label */}
+                      <div className="basis-[180px] sm:basis-[280px] min-w-0 p-2">
+                        <div className="h-full bg-[#323841] rounded-2xl px-4 py-4">
+                          <div className="w-full flex items-center gap-3 select-none cursor-default">
+                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                              {collateralIcon ? (
+                                <img src={collateralIcon} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-xs font-normal">
+                                  {(summary.collateralCode || "?").slice(0, 1)}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex items-center justify-end gap-2">
+                              <div className="min-w-0 text-white font-normal leading-none truncate">
+                                {summary.collateralCode}
+                              </div>
+
+                              <span className="inline-flex items-center rounded-md border border-white/10 bg-[#151A23] px-2 py-0.5 text-[11px] text-white/70 whitespace-nowrap">
+                                {summary.collateralNetwork || "Network"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="hidden sm:block text-2xl">→</div>
-
-              <div>
-                <div className="text-xs font-semibold text-gray-500">Your loan</div>
-                <div className="text-lg font-bold">
-                  {fmt(summary.loanAmount, 2)} {summary.borrowCode}
-                  {summary.borrowNetwork ? (
-                    <span className="ml-1 text-xs text-gray-500">
-                      ({summary.borrowNetwork})
-                    </span>
-                  ) : null}
-                </div>
-              </div>
             </div>
+            
+            {/* informational divider */}
+            <div className="grid grid-cols-2 gap-y-2 gap-x-6 sm:gap-x-10 text-sm mb-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-gray-500 text-xs whitespace-nowrap">Loan-to-Value</div>
+                <div className="text-white font-normal text-right">{summary.ltv}%</div>
+              </div>
 
-            <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-              <div>
-                <div className="text-gray-500 text-xs">Loan-to-Value</div>
-                <div className="font-semibold">{summary.ltv}%</div>
-              </div>
-              <div>
-                <div className="text-gray-500 text-xs">APR</div>
-                <div className="font-semibold">{fmt(summary.apr, 2)}%</div>
-              </div>
-              <div>
-                <div className="text-gray-500 text-xs">Monthly interest</div>
-                <div className="font-semibold">
-                  {summary.monthlyInterest
-                    ? `${fmt(summary.monthlyInterest, 6)} ${summary.borrowCode}`
-                    : "-"}
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-gray-500 text-xs whitespace-nowrap">Monthly interest</div>
+                <div className="text-white font-normal text-right">
+                  {summary.monthlyInterest ? `${fmtCompact(summary.monthlyInterest)} ${summary.borrowCode}` : "-"}
                 </div>
               </div>
-              <div>
-                <div className="text-gray-500 text-xs">Fee (1 month)</div>
-                <div className="font-semibold">
-                  {summary.fee ? `${fmt(summary.fee, 6)} ${summary.borrowCode}` : "-"}
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-gray-500 text-xs whitespace-nowrap">APR</div>
+                <div className="text-white font-normal text-right">{fmt(summary.apr, 2)}%</div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-gray-500 text-xs whitespace-nowrap">Fee (1 month)</div>
+                <div className="text-white font-normal text-right">
+                  {summary.fee ? `${fmtCompact(summary.fee)} ${summary.borrowCode}` : "-"}
                 </div>
               </div>
-              <div className="col-span-2">
-                <div className="text-gray-500 text-xs">Liquidation price</div>
-                <div className="font-semibold">
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-gray-500 text-xs whitespace-nowrap">Duration</div>
+                <div className="text-white font-normal text-right">{durationLabel}</div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-gray-500 text-xs whitespace-nowrap">Liquidation price</div>
+                <div className="text-white font-normal text-right">
                   {summary.liquidationPrice ? fmt(summary.liquidationPrice, 2) : "-"}
                 </div>
               </div>
             </div>
+
+            <div
+              className="w-full mb-4"
+              style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.10)" }}
+            />
 
             <div className="mt-4">
               <label className="block text-sm font-semibold text-gray-700 mb-1">

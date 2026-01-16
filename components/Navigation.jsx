@@ -72,7 +72,7 @@ export default function Navigation() {
   }, [isMenuOpen]);
 
   // -------------------------
-  // ✅ Menu link styling (ONE place)
+  //  Menu link styling (ONE place)
   // -------------------------
   const MENU_RIGHT_PADDING = "pr-[39px] md:pr-[79px] lg:pr-[144px]";
 

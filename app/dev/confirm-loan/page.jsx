@@ -13,6 +13,7 @@ export default function ConfirmLoanDevPreviewPage() {
       loanAmount: 500,
       borrowCode: "USDC",
       borrowNetwork: "ARBITRUM",
+      duration: "long",
       ltv: 65,
       apr: 12.5,
       monthlyInterest: 5.2,
