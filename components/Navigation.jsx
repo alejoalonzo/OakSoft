@@ -220,7 +220,7 @@ export default function Navigation() {
             <button
               type="button"
               onClick={toggleMenu}
-              className="md:hidden inline-flex flex-col justify-center items-end focus:outline-none cursor-pointer p-3 hover:bg-gray-800/20 rounded-lg transition-colors relative z-50"
+              className="md:hidden inline-flex flex-col justify-center items-end focus:outline-none cursor-pointer h-11 px-0 pr-[1px] bg-transparent rounded-lg relative z-50 focus-visible:ring-2 focus-visible:ring-[#95E100]/60"
               aria-controls="mobile-menu"
               aria-expanded={isMenuOpen}
             >
